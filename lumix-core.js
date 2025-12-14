@@ -49,10 +49,13 @@ async function sendMessage() {
 }
 
 // Event listeners
-sendBtn.addEventListener("click", sendMessage);
-inputBox.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") sendMessage();
-});
+
+if (sendBtn) {
+  sendBtn.addEventListener("click", sendMessage);
+} else {
+  console.error("Send button not found in DOM");
+}
+
 
 // Initial greeting
 addMessage("ai", "Hello! I'm Lumix Core. Ask me anything!");
