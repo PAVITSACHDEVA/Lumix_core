@@ -1,61 +1,57 @@
-/* ============================================================
-   Lumix Core — Frontend Connected to Render Backend
-   Works with: https://lumix-core.onrender.com/api/gemini
-============================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("Lumix Core frontend loaded.");
 
-console.log("Lumix Core frontend loaded.");
+  const sendBtn = document.getElementById("sendBtn");
+  const input = document.getElementById("userInput");
+  const chatBox = document.getElementById("chatBox");
+  const themeToggle = document.getElementById("themeToggle");
 
-const API_URL = "https://lumix-core.onrender.com/api/gemini";  // ✅ Secure backend endpoint
-
-// UI elements
-const inputBox = document.getElementById("user-input");
-const sendBtn = document.getElementById("send-btn");
-const chatWindow = document.getElementById("chat-window");
-
-// Append message to chat window
-function addMessage(sender, text) {
-  const bubble = document.createElement("div");
-  bubble.className = sender === "user" ? "user-message" : "ai-message";
-  bubble.innerText = text;
-  chatWindow.appendChild(bubble);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-}
-
-// Send user query
-async function sendMessage() {
-  const message = inputBox.value.trim();
-  if (!message) return;
-
-  addMessage("user", message);
-  inputBox.value = "";
-
-  addMessage("ai", "⏳ Thinking...");
-
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message })
-    });
-
-    const data = await res.json();
-
-    // Replace "Thinking..." with AI's answer
-    chatWindow.lastChild.innerText = data.reply || "⚠️ Error: No response.";
-
-  } catch (err) {
-    chatWindow.lastChild.innerText = "❌ Backend error: " + err.message;
+  if (!sendBtn || !input || !chatBox) {
+    console.error("Required DOM elements missing");
+    return;
   }
-}
 
-// Event listeners
-
-if (sendBtn) {
+  // SEND MESSAGE
   sendBtn.addEventListener("click", sendMessage);
-} else {
-  console.error("Send button not found in DOM");
-}
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
 
+  async function sendMessage() {
+    const message = input.value.trim();
+    if (!message) return;
 
-// Initial greeting
-addMessage("ai", "Hello! I'm Lumix Core. Ask me anything!");
+    appendMessage("You", message);
+    input.value = "";
+
+    try {
+      const res = await fetch("https://lumix-core-5tl0.onrender.com/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+
+      const data = await res.json();
+      appendMessage("Lumix", data.reply || "No response");
+    } catch (err) {
+      console.error(err);
+      appendMessage("Error", "Backend not reachable");
+    }
+  }
+
+  function appendMessage(sender, text) {
+    const msg = document.createElement("div");
+    msg.className =
+      "p-3 rounded-lg bg-white/10 border border-white/10";
+    msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  // THEME TOGGLE (OPTIONAL)
+  themeToggle?.addEventListener("click", () => {
+    document.body.classList.toggle("bg-black");
+    document.body.classList.toggle("bg-white");
+    document.body.classList.toggle("text-black");
+  });
+});

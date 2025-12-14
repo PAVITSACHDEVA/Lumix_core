@@ -1,7 +1,7 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lumix Core AI Chat Assistant</title>
@@ -41,176 +41,52 @@
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
 
   <!-- Your main styles -->
-  <link rel="stylesheet" href="styleAi.css" />
+
+  <link rel="stylesheet" href="./styleAi.css" />
 </head>
 
-<body>
-  <!-- FULLSCREEN LOADER -->
-  <div id="loading">
-    <div class="loading-title" id="loadingText"></div>
-    <div class="loader-bar">
-      <div class="loader-bar-fill" id="loaderFill"></div>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-indigo-950 to-purple-950 text-white">
+
+  <!-- APP CONTAINER -->
+  <div id="app" class="w-full max-w-2xl p-6 space-y-4">
+
+    <h1 class="text-3xl font-bold text-center">Lumix Core AI</h1>
+
+    <!-- CHAT WINDOW -->
+    <div
+      id="chatBox"
+      class="h-80 overflow-y-auto bg-black/40 rounded-xl p-4 space-y-3"
+    ></div>
+
+    <!-- INPUT ROW -->
+    <div class="flex gap-2">
+      <input
+        id="userInput"
+        type="text"
+        placeholder="Ask something…"
+        class="flex-1 px-4 py-2 rounded-lg bg-black/60 outline-none"
+      />
+
+      <button
+        id="sendBtn"
+        class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition"
+      >
+        Send
+      </button>
     </div>
-    <button
-      id="themeToggleLoading"
-      class="btn btn-outline-light d-flex align-items-center gap-2"
-    >
-      <i class="theme-icon bi bi-brightness-high"></i>
-      <span class="theme-label">Light Mode</span>
-    </button>
+
+    <!-- MODE TOGGLE -->
+    <div class="text-center pt-2">
+      <button
+        id="themeToggle"
+        class="px-4 py-2 rounded-lg border border-white/20"
+      >
+        🌗 Light Mode
+      </button>
+    </div>
+
   </div>
-
-  <!-- Avatar Panel Toggle Button -->
-  <button id="avatar-panel-toggle" title="Toggle AI Panel">
-    <i class="bi bi-person-bounding-box" style="font-size: 1.5rem;"></i>
-  </button>
-
-  <div id="main-wrapper">
-    <!-- AI AVATAR PANEL -->
-    <aside id="ai-avatar-panel">
-      <div class="avatar-container">
-        <div class="ai-avatar"></div>
-        <h3>Lumix Core</h3>
-      </div>
-
-      <div class="feature-control">
-        <label for="voice-toggle">Enable Voice Output</label>
-        <label class="switch">
-          <input type="checkbox" id="voice-toggle" />
-          <span class="slider round"></span>
-        </label>
-      </div>
-
-      <div class="history-container">
-        <h4>Interaction History</h4>
-        <div id="chat-history-log" class="text-xs opacity-70">
-          <p>Your conversation history will appear here.</p>
-        </div>
-      </div>
-    </aside>
-
-    <!-- MAIN APP CONTAINER -->
-    <main id="app-container">
-      <nav id="navbara" class="index">
-        <a href="index.html" class="gradient-text" data-sound-id="sound-home">Home</a>
-        <a href="Genartor.html" class="gradient-text" data-sound-id="sound-generator">
-          Random Image Generator
-        </a>
-        <a href="Converter.html" class="gradient-text" data-sound-id="sound-convert">
-          Image Converter
-        </a>
-        <a href="ABOUT.HTML" class="gradient-text" data-sound-id="sound-about">
-          About the AI
-        </a>
-      </nav>
-
-      <header class="chat-header">
-        <h1>Chat Assistant</h1>
-        <button
-          id="themeToggleHeader"
-          class="btn btn-outline-light d-flex align-items-center gap-2"
-        >
-          <i class="theme-icon bi bi-brightness-high"></i>
-          <span class="theme-label">Light Mode</span>
-        </button>
-      </header>
-
-      <section class="chat-box" data-testid="chat-container"></section>
-
-      <section class="summary-buttons">
-        <button data-testid="summary-short" class="w-full">
-          Summarize (5–10 lines)
-        </button>
-        <i
-          class="bi bi-question-circle explain-btn"
-          data-tooltip="Get a short summary of the last AI response."
-        ></i>
-        <button data-testid="summary-long" class="w-full">
-          Summarize (10–15 lines)
-        </button>
-        <i
-          class="bi bi-question-circle explain-btn"
-          data-tooltip="Get a longer, more detailed summary of the last AI response."
-        ></i>
-      </section>
-
-      <section class="utility-buttons">
-        <button id="quiz-generator" class="w-full">Generate a Quiz</button>
-        <i
-          class="bi bi-question-circle explain-btn"
-          data-tooltip="Creates a multiple-choice quiz based on the conversation."
-        ></i>
-      </section>
-
-      <section id="context-suggestions"></section>
-
-      <section class="chat-input-area">
-        <div class="input-wrapper">
-          <input
-            type="text"
-            data-testid="chat-input"
-            placeholder="Ask me anything..."
-          />
-          <div
-            class="lumix-input-bar d-flex gap-3 justify-content-center align-items-center"
-          >
-            <button
-              data-testid="loc-button"
-              title="Use my location"
-              class="lumix-btn loc-btn"
-            >
-              <i class="bi bi-geo-alt-fill"></i>
-            </button>
-
-            <button
-              data-testid="mic-button"
-              title="Use Microphone"
-              class="lumix-btn mic-btn"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                fill="currentColor"
-                class="bi bi-mic-fill"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0z"
-                />
-                <path
-                  d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5"
-                />
-              </svg>
-            </button>
-
-            <button
-              data-testid="send-button"
-              title="Send Message"
-              class="lumix-btn send-btn"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-              >
-                <path
-                  d="M4.20889 10.7327C3.9232 11.0326 3.93475 11.5074 4.23467 11.7931C4.5346 12.0788 5.00933 12.0672 5.29502 11.7673L11.2495 5.516V20.25C11.2495 20.6642 11.5853 21 11.9995 21C12.4137 21 12.7495 20.6642 12.7495 20.25V5.51565L18.7043 11.7673C18.99 12.0672 19.4648 12.0788 19.7647 11.7931C20.0646 11.5074 20.0762 11.0326 19.7905 10.7327L12.7238 3.31379C12.5627 3.14474 12.3573 3.04477 12.1438 3.01386C12.0971 3.00477 12.0489 3 11.9995 3C11.9498 3 11.9012 3.00483 11.8543 3.01406C11.6412 3.04518 11.4363 3.14509 11.2756 3.31379L4.20889 10.7327Z"
-                ></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- Tooltip element -->
-  <div id="tooltip" class="tooltip"></div>
-
-  <!-- Nav sounds -->
+    <div id="tooltip" class="tooltip"></div>
   <audio id="sound-home" src="./Assest/Home.mp3" preload="auto"></audio>
   <audio
     id="sound-lumixcore"
@@ -232,9 +108,7 @@
     src="./Assest/Random Image Generator.mp3"
     preload="auto"
   ></audio>
-
-  <!-- Main JS -->
- <script src="lumix-core.js"></script>
-
+  <!-- SCRIPT (IMPORTANT: at bottom) -->
+  <script src="./lumix-core.js"></script>
 </body>
 </html>
