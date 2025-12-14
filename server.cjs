@@ -1,4 +1,16 @@
-// server.cjs — FINAL PRODUCTION BACKEND
+// server.cjs — FINAL FIXED VERSION
+
+const express = require("express");
+const fetch = require("node-fetch");
+require("dotenv").config();
+
+// ✅ CREATE APP FIRST
+const app = express();
+
+// ✅ MIDDLEWARES
+app.use(express.json());
+
+// ✅ CORS (AFTER app exists)
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -6,17 +18,10 @@ app.use((req, res, next) => {
   next();
 });
 
-const express = require("express");
-const fetch = require("node-fetch");
-require("dotenv").config();
-
-const app = express();
-app.use(express.json());
-
-// ----------------------
-// HEALTH CHECK (REQUIRED)
-// ----------------------
-app.get("/health", (_req, res) => {
+// ==========================
+// HEALTH CHECK
+// ==========================
+app.get("/health", (req, res) => {
   res.status(200).json({
     status: "ok",
     service: "Lumix Core Backend",
@@ -24,9 +29,9 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// ----------------------
-// GEMINI PROXY ENDPOINT
-// ----------------------
+// ==========================
+// GEMINI PROXY
+// ==========================
 const GEMINI_MODEL = "models/gemini-2.5-flash";
 
 app.post("/api/gemini", async (req, res) => {
@@ -56,10 +61,7 @@ app.post("/api/gemini", async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(500).json({
-        error: true,
-        gemini: data
-      });
+      return res.status(500).json({ error: true, gemini: data });
     }
 
     const reply =
@@ -74,9 +76,9 @@ app.post("/api/gemini", async (req, res) => {
   }
 });
 
-// ----------------------
-// START SERVER (RENDER)
-// ----------------------
+// ==========================
+// START SERVER
+// ==========================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
