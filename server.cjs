@@ -2,32 +2,29 @@
  * ================================
  * Lumix Core – Production Backend
  * ================================
- * ✔ Secure Gemini API usage
- * ✔ Streaming responses
+ * ✔ Render safe
+ * ✔ Node 22 safe
+ * ✔ Streaming
  * ✔ Rate limiting
- * ✔ Domain locking
- * ✔ Render / Node 22 safe
+ * ✔ Domain lock
  */
 
-import express from "express";
-import fetch from "node-fetch";
-import rateLimit from "express-rate-limit";
-import cors from "cors";
+const express = require("express");
+const fetch = require("node-fetch");
+const rateLimit = require("express-rate-limit");
+const cors = require("cors");
 
 /* ======================
    CONFIG
 ====================== */
 
-// 🔐 Environment variable (ONLY in Render dashboard)
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// ❗ Allowed frontend origins (EDIT THIS)
 const ALLOWED_ORIGINS = [
   "https://pavitsachdeva.github.io",
   "https://lumix-core.onrender.com"
 ];
 
-// Gemini models (auto fallback)
 const GEMINI_MODELS = [
   "models/gemini-2.5-flash",
   "models/gemini-2.0-flash",
@@ -49,28 +46,29 @@ app.use(express.json({ limit: "1mb" }));
 app.use(
   cors({
     origin(origin, cb) {
-      if (!origin) return cb(null, true); // allow server-to-server
+      if (!origin) return cb(null, true);
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-      return cb(new Error("❌ Origin not allowed"), false);
+      return cb(new Error("Origin not allowed"), false);
     }
   })
 );
 
 /* ======================
-   RATE LIMITING
+   RATE LIMIT
 ====================== */
 
-const limiter = rateLimit({
-  windowMs: 60 * 1000, // 1 min
-  max: 30,             // 30 requests per IP
-  standardHeaders: true,
-  legacyHeaders: false
-});
-
-app.use("/api/", limiter);
+app.use(
+  "/api/",
+  rateLimit({
+    windowMs: 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false
+  })
+);
 
 /* ======================
-   HEALTH CHECK
+   HEALTH
 ====================== */
 
 app.get("/health", (_req, res) => {
@@ -78,84 +76,68 @@ app.get("/health", (_req, res) => {
 });
 
 /* ======================
-   STREAMING GEMINI
+   CHAT (STREAMING)
 ====================== */
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const { message, modelIndex = 0 } = req.body;
-
-    if (!message || typeof message !== "string") {
-      return res.status(400).json({ error: "Invalid message" });
-    }
+    const { message } = req.body;
+    if (!message) return res.status(400).end("Invalid message");
 
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Transfer-Encoding", "chunked");
 
     let lastError = null;
 
-    for (let i = modelIndex; i < GEMINI_MODELS.length; i++) {
-      const model = GEMINI_MODELS[i];
-
+    for (const model of GEMINI_MODELS) {
       try {
-        const response = await fetch(
+        const r = await fetch(
           `https://generativelanguage.googleapis.com/v1/${model}:generateContent?key=${GEMINI_API_KEY}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               contents: [
-                {
-                  role: "user",
-                  parts: [{ text: message }]
-                }
+                { role: "user", parts: [{ text: message }] }
               ]
             })
           }
         );
 
-        if (!response.ok) {
-          lastError = await response.text();
-          continue; // fallback to next model
-        }
-
-        const data = await response.json();
-
-        const text =
-          data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!text) {
-          lastError = "Empty Gemini response";
+        if (!r.ok) {
+          lastError = await r.text();
           continue;
         }
 
-        // 🔴 STREAM WORD-BY-WORD
-        const words = text.split(" ");
-        for (const w of words) {
-          res.write(w + " ");
-          await new Promise(r => setTimeout(r, 18));
+        const j = await r.json();
+        const text = j?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) {
+          lastError = "Empty response";
+          continue;
         }
 
-        res.end();
-        return;
-      } catch (err) {
-        lastError = err.message;
+        for (const word of text.split(" ")) {
+          res.write(word + " ");
+          await new Promise(r => setTimeout(r, 16));
+        }
+
+        return res.end();
+      } catch (e) {
+        lastError = e.message;
       }
     }
 
-    res.status(500).end(`❌ Gemini error: ${lastError}`);
-
-  } catch (err) {
-    res.status(500).end(`❌ Server error: ${err.message}`);
+    res.status(500).end("Gemini failed: " + lastError);
+  } catch (e) {
+    res.status(500).end("Server error");
   }
 });
 
 /* ======================
-   START SERVER
+   START
 ====================== */
 
 const PORT = process.env.PORT || 10000;
-
-app.listen(PORT, () => {
-  console.log("🚀 Lumix Core backend running on port", PORT);
-});
+app.listen(PORT, () =>
+  console.log("🚀 Lumix Core backend running on port", PORT)
+);
