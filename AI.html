@@ -1,29 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <title>Lumix Core AI</title>
 
-  <!-- Tailwind CDN (OK for now) -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class"
+    }
+  </script>
 
   <link rel="stylesheet" href="./styleAi.css" />
 </head>
 
 <body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-indigo-950 to-purple-950 text-white">
 
-  <!-- APP CONTAINER -->
-  <div id="app" class="w-full max-w-2xl p-6 space-y-4">
+  <!-- LOADING OVERLAY -->
+  <div id="loader" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50">
+    <div class="text-center space-y-4">
+      <div class="animate-spin h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
+      <p>Thinking…</p>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="w-full max-w-2xl p-6 space-y-4">
 
     <h1 class="text-3xl font-bold text-center">Lumix Core AI</h1>
 
-    <!-- CHAT WINDOW -->
-    <div
-      id="chatBox"
-      class="h-80 overflow-y-auto bg-black/40 rounded-xl p-4 space-y-3"
-    ></div>
+    <!-- CHAT -->
+    <div id="chatBox" class="h-80 overflow-y-auto bg-black/40 rounded-xl p-4 space-y-3"></div>
 
-    <!-- INPUT ROW -->
+    <!-- INPUT -->
     <div class="flex gap-2">
       <input
         id="userInput"
@@ -32,27 +42,22 @@
         class="flex-1 px-4 py-2 rounded-lg bg-black/60 outline-none"
       />
 
-      <button
-        id="sendBtn"
-        class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition"
-      >
+      <button id="micBtn" class="px-3 py-2 rounded-lg bg-gray-700">🎤</button>
+
+      <button id="sendBtn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700">
         Send
       </button>
     </div>
 
-    <!-- MODE TOGGLE -->
-    <div class="text-center pt-2">
-      <button
-        id="themeToggle"
-        class="px-4 py-2 rounded-lg border border-white/20"
-      >
-        🌗 Light Mode
+    <!-- TOGGLE -->
+    <div class="text-center">
+      <button id="themeToggle" class="px-4 py-2 rounded-lg border border-white/20">
+        🌗 Toggle Mode
       </button>
     </div>
 
   </div>
 
-  <!-- SCRIPT (IMPORTANT: at bottom) -->
   <script src="./lumix-core.js"></script>
 </body>
 </html>

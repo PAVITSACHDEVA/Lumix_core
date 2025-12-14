@@ -1,19 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("Lumix Core frontend loaded.");
-
   const sendBtn = document.getElementById("sendBtn");
   const input = document.getElementById("userInput");
   const chatBox = document.getElementById("chatBox");
+  const loader = document.getElementById("loader");
   const themeToggle = document.getElementById("themeToggle");
+  const micBtn = document.getElementById("micBtn");
 
-  if (!sendBtn || !input || !chatBox) {
-    console.error("Required DOM elements missing");
-    return;
-  }
+  const API_URL = "https://lumix-core-5tl0.onrender.com/api/gemini";
 
-  // SEND MESSAGE
+  // ---------------- THEME TOGGLE ----------------
+  themeToggle.addEventListener("click", () => {
+    document.documentElement.classList.toggle("dark");
+  });
+
+  // ---------------- SEND MESSAGE ----------------
   sendBtn.addEventListener("click", sendMessage);
-  input.addEventListener("keydown", (e) => {
+  input.addEventListener("keydown", e => {
     if (e.key === "Enter") sendMessage();
   });
 
@@ -21,37 +23,57 @@ document.addEventListener("DOMContentLoaded", () => {
     const message = input.value.trim();
     if (!message) return;
 
-    appendMessage("You", message);
+    append("You", message);
     input.value = "";
+    loader.classList.remove("hidden");
 
     try {
-      const res = await fetch("https://lumix-core-5tl0.onrender.com/api/gemini", {
+      const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message })
       });
 
       const data = await res.json();
-      appendMessage("Lumix", data.reply || "No response");
-    } catch (err) {
-      console.error(err);
-      appendMessage("Error", "Backend not reachable");
+      append("Lumix", data.reply || "No response");
+    } catch {
+      append("Error", "Backend not reachable (Render sleeping?)");
+    } finally {
+      loader.classList.add("hidden");
     }
   }
 
-  function appendMessage(sender, text) {
-    const msg = document.createElement("div");
-    msg.className =
-      "p-3 rounded-lg bg-white/10 border border-white/10";
-    msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
-    chatBox.appendChild(msg);
+  function append(sender, text) {
+    const div = document.createElement("div");
+    div.className = "p-3 rounded-lg bg-white/10";
+    div.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  // THEME TOGGLE (OPTIONAL)
-  themeToggle?.addEventListener("click", () => {
-    document.body.classList.toggle("bg-black");
-    document.body.classList.toggle("bg-white");
-    document.body.classList.toggle("text-black");
-  });
+  // ---------------- MICROPHONE ----------------
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (SpeechRecognition) {
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+
+    micBtn.addEventListener("click", () => {
+      recognition.start();
+      micBtn.textContent = "🎙️";
+    });
+
+    recognition.onresult = e => {
+      input.value = e.results[0][0].transcript;
+      micBtn.textContent = "🎤";
+    };
+
+    recognition.onerror = () => {
+      micBtn.textContent = "🎤";
+    };
+  } else {
+    micBtn.disabled = true;
+    micBtn.textContent = "🚫";
+  }
 });
