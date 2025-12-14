@@ -1,15 +1,14 @@
 {
   "name": "lumix-core-backend",
   "version": "1.0.0",
-  "description": "Lumix Core Gemini API proxy",
   "main": "server.cjs",
-  "type": "commonjs",
   "scripts": {
     "start": "node server.cjs"
   },
   "dependencies": {
     "express": "^4.19.2",
-    "node-fetch": "^2.7.0",
-    "dotenv": "^16.4.5"
+    "node-fetch": "^3.3.2",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.5.0"
   }
 }
