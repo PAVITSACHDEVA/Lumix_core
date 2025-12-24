@@ -12,6 +12,7 @@ const CREATOR_NAME = "Pavit";
 document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- SAFE DOM SELECT ---------- */
+  
 
   const $ = (q) => document.querySelector(q);
 
