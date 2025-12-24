@@ -40,7 +40,7 @@ app.get("/health", (_, res) => {
 /* =======================
    GEMINI PROXY
 ======================= */
-iuytrdesdfhudfsghiouytrdfgkl;ojhgfd 
+
 app.post("/api/gemini", async (req, res) => {
   const { prompt, model } = req.body;
   if (!prompt) return res.status(400).json({ error: "Missing prompt" });
