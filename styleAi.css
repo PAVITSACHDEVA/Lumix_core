@@ -116,3 +116,39 @@ button {
 #loading.hidden {
   pointer-events: none !important;
 }
+/* ===== POST-LOADER FIX ===== */
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #0b1437, #000);
+  color: white;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+#app-container {
+  background: transparent;
+}
+
+/* Chat bubbles visibility */
+.message {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  max-width: 70%;
+}
+
+.message.user {
+  background: #4a90e2;
+  color: white;
+  margin-left: auto;
+}
+
+.message.ai {
+  background: #1e293b;
+  color: #e5e7eb;
+}
+.message.ai pre {
+  background: #111827;
+  padding: 8px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
