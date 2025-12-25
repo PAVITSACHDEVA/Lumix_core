@@ -3,7 +3,8 @@
 // =========================
 
 const AI_NAME = "Lumix Core";
-const BACKEND_URL = "https://lumix-core-5tI0.onrender.com";
+const BACKEND_URL = "https://lumix-core-5tl0.onrender.com";
+
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -133,4 +134,3 @@ document.addEventListener("DOMContentLoaded", () => {
     "ai"
   );
 });
-  
