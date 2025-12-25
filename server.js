@@ -1,6 +1,7 @@
 // ===============================
 // Lumix Core Backend Server
 // ===============================
+console.log("Gemini key loaded:", !!process.env.GEMINI_API_KEY);
 
 import express from "express";
 import cors from "cors";
