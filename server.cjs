@@ -79,7 +79,7 @@ app.post("/api/ai", async (req, res) => {
 });
 
 // -------------------------------
-// Start Server (Render compatible)
+// Start Server (Render compatible).
 // -------------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
