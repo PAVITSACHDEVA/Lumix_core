@@ -45,23 +45,19 @@ app.post("/api/ai", async (req, res) => {
   try {
     const { prompt } = req.body;
 
-    if (!prompt?.trim()) {
-      return res.status(400).json({ error: "Prompt required" });
-    }
-
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-001", // ✅ FIXED
+      model: "gemini-1.0-pro"
     });
 
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    res.json({ reply: result.response.text() });
 
-    res.json({ reply: text });
   } catch (err) {
     console.error("Gemini Error:", err);
     res.status(500).json({ error: "AI request failed" });
   }
 });
+
 
 // -------------------------------
 // Start Server (Render)
