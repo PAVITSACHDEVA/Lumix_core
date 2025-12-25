@@ -1,6 +1,6 @@
 import express from "express";
-import fetch from "node-fetch";
 import rateLimit from "express-rate-limit";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -37,42 +37,15 @@ app.use(
 );
 
 /* =======================
-   Gemini Call (FIXED)
+   Gemini SDK (THE FIX)
 ======================= */
-async function callGemini(prompt) {
-  const url =
-    "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent";
-
-  const response = await fetch(`${url}?key=${process.env.GEMINI_API_KEY}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [{ text: prompt }]
-        }
-      ]
-    })
-  });
-
-  const raw = await response.text();
-  console.log("📦 Gemini raw:", raw);
-
-  if (!response.ok) {
-    throw new Error(`Gemini HTTP ${response.status}`);
-  }
-
-  const data = JSON.parse(raw);
-  const text =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) throw new Error("No text in Gemini response");
-
-  return text;
-}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash"
+});
 
 /* =======================
-   API ROUTES
+   API
 ======================= */
 app.post("/api/ai", async (req, res) => {
   try {
@@ -81,25 +54,31 @@ app.post("/api/ai", async (req, res) => {
       return res.status(400).json({ reply: "Prompt missing" });
     }
 
-    const reply = await callGemini(prompt);
-    res.json({ reply });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    res.json({ reply: text });
 
   } catch (err) {
-    console.error("❌ Gemini failed:", err.message);
+    console.error("❌ Gemini SDK error:", err);
     res.status(500).json({ reply: "Gemini backend error" });
   }
 });
 
+/* =======================
+   Health
+======================= */
 app.get("/health", (_, res) => {
   res.json({
     status: "ok",
     keyPresent: !!process.env.GEMINI_API_KEY,
-    model: "gemini-1.5-flash"
+    model: "gemini-1.5-flash (SDK)"
   });
 });
 
 /* =======================
-   Start Server
+   Start
 ======================= */
 app.listen(PORT, () => {
   console.log(`🚀 Server running on ${PORT}`);
