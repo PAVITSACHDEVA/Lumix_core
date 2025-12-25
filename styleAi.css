@@ -1,190 +1,101 @@
-s/* ===== RESET ===== */
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  font-family: system-ui, sans-serif;
-  background: radial-gradient(circle at top, #6366f1, transparent 60%),
-              radial-gradient(circle at bottom, #ec4899, transparent 60%),
-              #020617;
-  color: #f9fafb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: background .4s, color .4s;
-}
-
-body.light-mode {
-  background: radial-gradient(circle at top, #fde68a, transparent 60%),
-              radial-gradient(circle at bottom, #93c5fd, transparent 60%),
-              #eef2ff;
-  color: #020617;
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
 }
 
 /* ===== LOADER ===== */
 #loading {
   position: fixed;
   inset: 0;
-  background: #020617;
+  background: radial-gradient(circle at center, #050b1e, #000);
+  z-index: 9999;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  z-index: 9999;
+  justify-content: center;
+  transition: opacity 0.4s ease;
+}
+
+#loading.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .loading-title {
   font-size: 2rem;
-  font-weight: bold;
+  color: white;
   margin-bottom: 10px;
 }
 
+#loadingText {
+  color: #aaa;
+  margin-bottom: 20px;
+}
+
 .loader-bar {
-  width: 260px;
-  height: 12px;
-  background: #1e293b;
-  border-radius: 999px;
+  width: 220px;
+  height: 6px;
+  background: #222;
+  border-radius: 10px;
   overflow: hidden;
-  margin-top: 12px;
 }
 
 .loader-bar-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #22c55e, #3b82f6, #a855f7);
-  transition: width .4s;
+  background: linear-gradient(90deg, #6cf, #8af);
+  transition: width 0.3s ease;
 }
 
 /* ===== APP ===== */
 #app-container {
-  width: 100%;
-  max-width: 800px;
-  background: rgba(15,23,42,.9);
-  backdrop-filter: blur(14px);
-  border-radius: 22px;
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0,0,0,.6);
-}
-
-body.light-mode #app-container {
-  background: rgba(255,255,255,.95);
-}
-
-/* ===== HEADER ===== */
-.chat-header {
-  padding: 16px 20px;
+  height: 100vh;
   display: flex;
-  align-items: center;
-  background: linear-gradient(90deg,#020617,#1e3a8a);
-}
-
-.chat-header h1 {
-  margin: 0;
-  font-size: 1.3rem;
+  flex-direction: column;
 }
 
 /* ===== CHAT ===== */
 .chat-box {
-  padding: 20px;
-  height: 60vh;
+  flex: 1;
+  padding: 15px;
   overflow-y: auto;
-}
-
-.message {
-  margin-bottom: 14px;
-  animation: fadeIn .4s ease;
 }
 
 .message.user {
   text-align: right;
 }
 
-.message-content {
-  display: inline-block;
-  padding: 12px 16px;
-  border-radius: 16px;
-  max-width: 85%;
-  background: rgba(30,41,59,.9);
-}
-
-.message.user .message-content {
-  background: rgba(59,130,246,.8);
-}
-
-/* ===== THINKING ===== */
-.thinking-indicator {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.thinking-dot {
-  width: 6px;
-  height: 6px;
-  background: #a5b4fc;
-  border-radius: 50%;
-  animation: blink 1.2s infinite;
-}
-
-.thinking-dot:nth-child(2) { animation-delay: .2s; }
-.thinking-dot:nth-child(3) { animation-delay: .4s; }
-
-@keyframes blink {
-  0%,100% { opacity: .3; }
-  50% { opacity: 1; }
+.message.ai {
+  text-align: left;
 }
 
 /* ===== INPUT ===== */
 .chat-input-area {
-  padding: 16px;
-  border-top: 1px solid rgba(148,163,184,.3);
+  padding: 12px;
+  border-top: 1px solid #222;
 }
 
 .input-wrapper {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 input[data-testid="chat-input"] {
   flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  border: none;
-  background: rgba(15,23,42,.9);
-  color: white;
-  outline: none;
+  padding: 10px;
+  font-size: 16px;
 }
 
-body.light-mode input {
-  background: #e5e7eb;
-  color: #020617;
-}
-
-/* ===== BUTTON ===== */
 .lumix-btn {
   padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(148,163,184,.6);
-  background: rgba(15,23,42,.9);
-  color: white;
   cursor: pointer;
 }
-
-.lumix-btn:hover {
-  background: rgba(30,64,175,.9);
+.lumix-btn-primary {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
 }
-
-/* ===== UTILITY ===== */
-.utility-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px;
-}
-
-/* ===== ANIM ===== */
-@keyframes fadeIn {
-  from { opacity:0; transform:translateY(4px); }
-  to { opacity:1; transform:none; }
-}
+.lumix-btn-primary:hover {
+  background-color: #357abd;
+} 
