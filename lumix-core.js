@@ -10,10 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const sendBtn = document.querySelector('[data-testid="send-button"]');
   const chatBox = document.querySelector('[data-testid="chat-container"]');
 
-  // ---- LOADER PROGRESS ----
+  /* -------- LOADER -------- */
   let progress = 0;
   const progressTimer = setInterval(() => {
-    progress = Math.min(progress + 10, 90);
+    progress = Math.min(progress + 12, 90);
     loaderFill.style.width = progress + "%";
   }, 250);
 
@@ -26,14 +26,12 @@ document.addEventListener("DOMContentLoaded", () => {
       loaderFill.style.width = "100%";
 
       setTimeout(() => {
-        loading.classList.add("hidden");
-        app.style.display = "flex";
-
-        // 🔑 IMPORTANT FIX
+        // 🔥 CRITICAL FIX
+        loading.remove();              // remove overlay entirely
+        app.style.display = "flex";    // show app
         input.disabled = false;
         input.focus();
-
-      }, 400);
+      }, 300);
 
     } catch {
       setTimeout(bootCheck, 1200);
@@ -42,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   bootCheck();
 
-  // ---- CHAT ----
+  /* -------- CHAT -------- */
   function addMessage(text, sender) {
     const div = document.createElement("div");
     div.className = `message ${sender}`;
@@ -58,7 +56,10 @@ document.addEventListener("DOMContentLoaded", () => {
     addMessage(text, "user");
     input.value = "";
 
-    addMessage("Thinking…", "ai");
+    const thinking = document.createElement("div");
+    thinking.className = "message ai";
+    thinking.textContent = "Thinking…";
+    chatBox.appendChild(thinking);
 
     try {
       const res = await fetch(`${BACKEND_URL}/api/ai`, {
@@ -68,15 +69,18 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const data = await res.json();
-      chatBox.lastChild.remove();
+      thinking.remove();
       addMessage(data.reply, "ai");
 
     } catch {
-      chatBox.lastChild.remove();
+      thinking.remove();
       addMessage("❌ Backend error", "ai");
     }
   }
 
   sendBtn.onclick = sendMessage;
-  input.onkeydown = e => e.key === "Enter" && sendMessage();
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+
 });

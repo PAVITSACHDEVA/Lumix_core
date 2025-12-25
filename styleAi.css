@@ -99,3 +99,20 @@ input[data-testid="chat-input"] {
 .lumix-btn-primary:hover {
   background-color: #357abd;
 } 
+/* === HARD FIX FOR INPUT BLOCK === */
+#app-container,
+.chat-input-area,
+.input-wrapper,
+input[data-testid="chat-input"],
+button {
+  pointer-events: auto !important;
+  user-select: text !important;
+}
+
+/* Ensure loader cannot intercept events */
+#loading {
+  pointer-events: none !important;
+}
+#loading.hidden {
+  pointer-events: none !important;
+}
