@@ -1,18 +1,17 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
-import rateLimit from "express-rate-limit";
+const express = require("express");
+const fetch = require("node-fetch");
+const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ======================
+// =====================
 // Middleware
-// ======================
+// =====================
 app.use(cors());
 app.use(express.json());
 
-// Optional rate limit (good practice)
 app.use(
   rateLimit({
     windowMs: 60 * 1000,
@@ -20,25 +19,18 @@ app.use(
   })
 );
 
-// ======================
-// SAFE MODEL LIST
-// ======================
-// ❌ No experimental / preview / 2.x / 3.x models
+// =====================
+// SAFE GEMINI MODELS
+// =====================
 const MODELS = [
   "models/gemini-1.5-flash",
   "models/gemini-1.5-pro"
 ];
 
-// ======================
-// Gemini Route
-// ======================
-app.post("/api/gemini", async (req, res) => {
-  const { prompt } = req.body;
-
-  if (!prompt) {
-    return res.status(400).json({ error: "Prompt is required" });
-  }
-
+// =====================
+// Core Gemini Handler
+// =====================
+async function callGemini(prompt) {
   for (const model of MODELS) {
     try {
       console.log("🧠 Trying model:", model);
@@ -62,50 +54,67 @@ app.post("/api/gemini", async (req, res) => {
       );
 
       if (!response.ok) {
-        console.warn(`⚠️ Model failed: ${model} (${response.status})`);
-        continue; // try next model
-      }
-
-      const data = await response.json();
-
-      const text =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!text) {
-        console.warn(`⚠️ Empty response from ${model}`);
+        console.warn(`⚠️ ${model} failed with ${response.status}`);
         continue;
       }
 
-      // ✅ SUCCESS
-      return res.json({
-        model,
-        text
-      });
+      const data = await response.json();
+      const text =
+        data &&
+        data.candidates &&
+        data.candidates[0] &&
+        data.candidates[0].content &&
+        data.candidates[0].content.parts &&
+        data.candidates[0].content.parts[0] &&
+        data.candidates[0].content.parts[0].text;
+
+      if (text) return text;
 
     } catch (err) {
       console.error(`❌ Error with ${model}`, err);
     }
   }
 
-  // ❌ All models failed
-  res.status(500).json({
-    error: "All Gemini models failed"
-  });
+  throw new Error("All Gemini models failed");
+}
+
+// =====================
+// API ROUTES
+// =====================
+
+// 🔹 Main Gemini route
+app.post("/api/gemini", async (req, res) => {
+  try {
+    const reply = await callGemini(req.body.prompt);
+    res.json({ reply });
+  } catch {
+    res.status(500).json({ error: "Gemini failed" });
+  }
 });
 
-// ======================
-// Health Check (IMPORTANT)
-// ======================
-app.get("/health", (_, res) => {
+// 🔹 Alias route (FRONTEND FIX)
+app.post("/api/ai", async (req, res) => {
+  try {
+    const reply = await callGemini(req.body.prompt);
+    res.json({ reply });
+  } catch {
+    res.status(500).json({ error: "Gemini failed" });
+  }
+});
+
+// =====================
+// Health Check
+// =====================
+app.get("/health", (req, res) => {
   res.json({
     status: "ok",
     models: MODELS
   });
 });
 
-// ======================
+// =====================
 // Start Server
-// ======================
+// =====================
 app.listen(PORT, () => {
   console.log(`🚀 Lumix Core backend running on port ${PORT}`);
 });
