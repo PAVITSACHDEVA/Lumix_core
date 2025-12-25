@@ -20,7 +20,14 @@ app.use(
 );
 
 // =====================
-// SAFE GEMINI MODELS
+// VERIFY API KEY ON BOOT
+// =====================
+if (!process.env.GEMINI_API_KEY) {
+  console.error("❌ GEMINI_API_KEY IS MISSING");
+}
+
+// =====================
+// SAFE MODELS
 // =====================
 const MODELS = [
   "models/gemini-1.5-flash",
@@ -28,85 +35,98 @@ const MODELS = [
 ];
 
 // =====================
-// Core Gemini Function
+// Gemini Call
 // =====================
 async function callGemini(prompt) {
   for (const model of MODELS) {
-    try {
-      console.log("🧠 Trying model:", model);
+    console.log("🧠 Trying model:", model);
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: prompt }]
-              }
-            ]
-          })
-        }
-      );
-
-      if (!response.ok) {
-        console.warn(`⚠️ ${model} failed (${response.status})`);
-        continue;
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }]
+            }
+          ]
+        })
       }
+    );
 
-      const data = await response.json();
-      const text =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const rawText = await res.text();
 
-      if (text) return text;
+    console.log("📦 Gemini raw response:", rawText);
 
-    } catch (err) {
-      console.error(`❌ Error with ${model}`, err);
+    if (!res.ok) {
+      console.warn(`⚠️ ${model} failed (${res.status})`);
+      continue;
     }
+
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      continue;
+    }
+
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (text) return text;
   }
 
-  throw new Error("All Gemini models failed");
+  throw new Error("No valid Gemini response");
 }
 
 // =====================
 // API ROUTES
 // =====================
+app.post("/api/ai", async (req, res) => {
+  try {
+    const prompt = req.body?.prompt;
+    if (!prompt) {
+      return res.status(400).json({ reply: "Prompt missing" });
+    }
+
+    const reply = await callGemini(prompt);
+    res.json({ reply });
+
+  } catch (err) {
+    console.error("❌ Gemini error:", err.message);
+    res.status(500).json({
+      reply: "Gemini backend error (check server logs)"
+    });
+  }
+});
+
+// Alias
 app.post("/api/gemini", async (req, res) => {
   try {
     const reply = await callGemini(req.body.prompt);
     res.json({ reply });
   } catch {
-    res.status(500).json({ error: "Gemini failed" });
-  }
-});
-
-// 🔹 ALIAS for frontend (/api/ai)
-app.post("/api/ai", async (req, res) => {
-  try {
-    const reply = await callGemini(req.body.prompt);
-    res.json({ reply });
-  } catch {
-    res.status(500).json({ error: "Gemini failed" });
+    res.status(500).json({ reply: "Gemini failed" });
   }
 });
 
 // =====================
-// Health Check
+// Health
 // =====================
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
+    keyPresent: !!process.env.GEMINI_API_KEY,
     models: MODELS
   });
 });
 
 // =====================
-// Start Server
+// Start
 // =====================
 app.listen(PORT, () => {
-  console.log(`🚀 Lumix Core backend running on port ${PORT}`);
+  console.log(`🚀 Server running on ${PORT}`);
 });
