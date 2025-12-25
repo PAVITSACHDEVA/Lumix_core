@@ -10,7 +10,6 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="styleAi.css">
-
 </head>
 <body>
 
@@ -24,24 +23,16 @@
 </div>
 
 <!-- ================= APP ================= -->
-<div id="app-container">
+<div id="app-container" style="display:none;">
 
   <!-- Header -->
   <div class="chat-header">
     <h1>Lumix Core AI</h1>
-    <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
-      <span id="active-model">Flash ⚡</span>
+    <div style="margin-left:auto; display:flex; gap:10px;">
       <button id="themeToggleHeader" class="lumix-btn">
         <i class="bi bi-brightness-high"></i>
       </button>
     </div>
-  </div>
-
-  <!-- Model Switch -->
-  <div class="utility-buttons">
-    <button class="lumix-btn" onclick="switchModel(0)">Flash ⚡</button>
-    <button class="lumix-btn" onclick="switchModel(1)">Pro 🧠</button>
-    <button class="lumix-btn" onclick="switchModel(2)">Lite 🚀</button>
   </div>
 
   <!-- Chat -->
@@ -50,17 +41,8 @@
   <!-- Input -->
   <div class="chat-input-area">
     <div class="input-wrapper">
-      <input
-        data-testid="chat-input"
-        placeholder="Ask something..."
-        autocomplete="off"
-      />
-      <button class="lumix-btn" data-testid="mic-button">
-        <i class="bi bi-mic"></i>
-      </button>
-      <button class="lumix-btn" data-testid="send-button">
-        Send
-      </button>
+      <input data-testid="chat-input" placeholder="Ask something..." />
+      <button class="lumix-btn" data-testid="send-button">Send</button>
     </div>
   </div>
 
@@ -68,6 +50,5 @@
 
 <!-- JS -->
 <script src="lumix-core.js"></script>
-
 </body>
 </html>
