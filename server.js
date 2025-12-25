@@ -1,7 +1,7 @@
-const express = require("express");
-const fetch = require("node-fetch");
-const cors = require("cors");
-const rateLimit = require("express-rate-limit");
+import express from "express";
+import fetch from "node-fetch";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,7 +28,7 @@ const MODELS = [
 ];
 
 // =====================
-// Core Gemini Handler
+// Core Gemini Function
 // =====================
 async function callGemini(prompt) {
   for (const model of MODELS) {
@@ -54,19 +54,13 @@ async function callGemini(prompt) {
       );
 
       if (!response.ok) {
-        console.warn(`⚠️ ${model} failed with ${response.status}`);
+        console.warn(`⚠️ ${model} failed (${response.status})`);
         continue;
       }
 
       const data = await response.json();
       const text =
-        data &&
-        data.candidates &&
-        data.candidates[0] &&
-        data.candidates[0].content &&
-        data.candidates[0].content.parts &&
-        data.candidates[0].content.parts[0] &&
-        data.candidates[0].content.parts[0].text;
+        data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (text) return text;
 
@@ -81,8 +75,6 @@ async function callGemini(prompt) {
 // =====================
 // API ROUTES
 // =====================
-
-// 🔹 Main Gemini route
 app.post("/api/gemini", async (req, res) => {
   try {
     const reply = await callGemini(req.body.prompt);
@@ -92,7 +84,7 @@ app.post("/api/gemini", async (req, res) => {
   }
 });
 
-// 🔹 Alias route (FRONTEND FIX)
+// 🔹 ALIAS for frontend (/api/ai)
 app.post("/api/ai", async (req, res) => {
   try {
     const reply = await callGemini(req.body.prompt);
