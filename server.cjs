@@ -10,7 +10,7 @@ import { fileURLToPath } from "url";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // -------------------------------
-// Path Fix (ESM)
+// Path Fix (ES Modules)
 // -------------------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,7 +34,7 @@ app.use(
 );
 
 // -------------------------------
-// Serve Frontend (for Render only)
+// Serve Static Frontend (Render)
 // -------------------------------
 app.use(express.static(__dirname));
 
@@ -49,18 +49,18 @@ app.get("/health", (req, res) => {
 });
 
 // -------------------------------
-// AI SETUP (Gemini)
+// Gemini AI Setup
 // -------------------------------
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // -------------------------------
-// AI API ROUTE
+// AI API Route
 // -------------------------------
 app.post("/api/ai", async (req, res) => {
   try {
     const { prompt } = req.body;
 
-    if (!prompt) {
+    if (!prompt || prompt.trim() === "") {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
@@ -69,17 +69,17 @@ app.post("/api/ai", async (req, res) => {
     });
 
     const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    const text = result.response.text();
 
-    res.json({ reply: response });
-  } catch (err) {
-    console.error("AI Error:", err);
+    res.json({ reply: text });
+  } catch (error) {
+    console.error("Gemini Error:", error);
     res.status(500).json({ error: "AI request failed" });
   }
 });
 
 // -------------------------------
-// PORT (Render compatible)
+// Start Server (Render compatible)
 // -------------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
