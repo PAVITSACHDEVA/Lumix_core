@@ -1,15 +1,39 @@
 import express from "express";
 import fetch from "node-fetch";
-import cors from "cors";
 import rateLimit from "express-rate-limit";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
+
+// =====================
+// CORS (FIXED PROPERLY)
+// =====================
+const ALLOWED_ORIGINS = [
+  "https://pavitsachdeva.github.io"
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  // 🔥 VERY IMPORTANT: preflight
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
 
 // =====================
 // Middleware
 // =====================
-app.use(cors());
 app.use(express.json());
 
 app.use(
@@ -18,13 +42,6 @@ app.use(
     max: 60
   })
 );
-
-// =====================
-// VERIFY API KEY ON BOOT
-// =====================
-if (!process.env.GEMINI_API_KEY) {
-  console.error("❌ GEMINI_API_KEY IS MISSING");
-}
 
 // =====================
 // SAFE MODELS
@@ -39,7 +56,7 @@ const MODELS = [
 // =====================
 async function callGemini(prompt) {
   for (const model of MODELS) {
-    console.log("🧠 Trying model:", model);
+    console.log("🧠 Trying:", model);
 
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -57,29 +74,16 @@ async function callGemini(prompt) {
       }
     );
 
-    const rawText = await res.text();
+    if (!res.ok) continue;
 
-    console.log("📦 Gemini raw response:", rawText);
-
-    if (!res.ok) {
-      console.warn(`⚠️ ${model} failed (${res.status})`);
-      continue;
-    }
-
-    let data;
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      continue;
-    }
-
+    const data = await res.json();
     const text =
       data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (text) return text;
   }
 
-  throw new Error("No valid Gemini response");
+  throw new Error("Gemini failed");
 }
 
 // =====================
@@ -97,9 +101,7 @@ app.post("/api/ai", async (req, res) => {
 
   } catch (err) {
     console.error("❌ Gemini error:", err.message);
-    res.status(500).json({
-      reply: "Gemini backend error (check server logs)"
-    });
+    res.status(500).json({ reply: "Gemini backend error" });
   }
 });
 
