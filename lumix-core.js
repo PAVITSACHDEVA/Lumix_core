@@ -5,7 +5,6 @@
 const AI_NAME = "Lumix Core";
 const BACKEND_URL = "https://lumix-core-5tl0.onrender.com";
 
-
 document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- DOM HELPERS ---------- */
