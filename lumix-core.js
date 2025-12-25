@@ -1,19 +1,13 @@
 // =========================
-// Lumix Core — Main Script
+// Lumix Core — Frontend Script
 // =========================
 
-/* ---------- BASIC CONFIG ---------- */
-
 const AI_NAME = "Lumix Core";
-const CREATOR_NAME = "Pavit";
-
-/* ---------- DOM READY ---------- */
+const BACKEND_URL = "https://lumix-core-5tI0.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* ---------- SAFE DOM SELECT ---------- */
-  
-
+  /* ---------- DOM HELPERS ---------- */
   const $ = (q) => document.querySelector(q);
 
   const input = $('[data-testid="chat-input"]');
@@ -21,73 +15,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatBox = $('[data-testid="chat-container"]');
   const micBtn = $('[data-testid="mic-button"]');
   const themeToggle = $("#themeToggleHeader");
-  const loader = $("#loading");
-  const loaderText = $("#loadingText");
-  const loaderFill = $("#loaderFill");
-  const modelLabel = $("#active-model");
 
+  /* ---------- BASIC CHECK ---------- */
   if (!input || !sendBtn || !chatBox) {
     console.error("❌ Required DOM elements missing");
     return;
   }
 
-  /* ---------- LOADER ---------- */
-
-  if (loader) {
-    const phrases = [
-      "Booting Lumix Core…",
-      "Warming neural circuits…",
-      "Connecting to Gemini…",
-      "Almost ready…"
-    ];
-    let i = 0;
-    setInterval(() => {
-      if (loaderText) loaderText.textContent = phrases[i++ % phrases.length];
-    }, 1800);
-
-    let p = 0;
-    const int = setInterval(() => {
-      p += 12;
-      if (loaderFill) loaderFill.style.width = `${p}%`;
-      if (p >= 100) {
-        clearInterval(int);
-        loader.style.opacity = "0";
-        setTimeout(() => loader.remove(), 700);
-      }
-    }, 300);
-  }
-
   /* ---------- THEME ---------- */
-
   themeToggle?.addEventListener("click", () => {
     document.body.classList.toggle("light-mode");
   });
 
-  /* ---------- MODEL SYSTEM ---------- */
-
-  const MODELS = [
-    { id: "models/gemini-2.5-flash", label: "Flash ⚡" },
-    { id: "models/gemini-1.5-pro", label: "Pro 🧠" },
-    { id: "models/gemini-1.5-flash-8b", label: "Lite 🚀" }
-  ];
-
-  let activeModel = 0;
-
-  function updateModelUI() {
-    if (modelLabel) modelLabel.textContent = MODELS[activeModel].label;
-  }
-
-  window.switchModel = (i) => {
-    activeModel = i;
-    updateModelUI();
-  };
-
-  updateModelUI();
-
-  /* ---------- CHAT HELPERS ---------- */
-
-  function escapeHTML(t) {
-    return t.replace(/[&<>]/g, c =>
+  /* ---------- UI HELPERS ---------- */
+  function escapeHTML(text) {
+    return text.replace(/[&<>]/g, c =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])
     );
   }
@@ -104,17 +46,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ---------- THINKING ---------- */
-
   let thinkingEl = null;
 
-  function showThinking(label) {
+  function showThinking() {
     if (thinkingEl) return;
     thinkingEl = document.createElement("div");
     thinkingEl.className = "message ai";
     thinkingEl.innerHTML = `
       <div class="font-bold">${AI_NAME}</div>
       <div class="message-content thinking-indicator">
-        <span id="thinking-text">${label}</span>
+        <span>Thinking</span>
         <span class="thinking-dot"></span>
         <span class="thinking-dot"></span>
         <span class="thinking-dot"></span>
@@ -129,43 +70,25 @@ document.addEventListener("DOMContentLoaded", () => {
     thinkingEl = null;
   }
 
-  /* ---------- GEMINI CALL ---------- */
+  /* ---------- BACKEND AI CALL ---------- */
+  async function askBackend(prompt) {
+    const res = await fetch(`${BACKEND_URL}/api/ai`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ prompt })
+    });
 
-  async function callGemini(prompt) {
-
-    for (let i = 0; i < MODELS.length; i++) {
-      const model = MODELS[(activeModel + i) % MODELS.length];
-      showThinking(`Thinking with ${model.label}`);
-
-      try {
-        const res = await fetch("/api/gemini", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: model.id,
-            prompt
-          })
-        });
-
-        if (!res.ok) continue;
-
-        const data = await res.json();
-        hideThinking();
-        activeModel = MODELS.indexOf(model);
-        updateModelUI();
-        return data.text;
-
-      } catch {
-        continue;
-      }
+    if (!res.ok) {
+      throw new Error("Backend error");
     }
 
-    hideThinking();
-    throw new Error("All models failed");
+    const data = await res.json();
+    return data.reply;
   }
 
   /* ---------- SEND MESSAGE ---------- */
-
   async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
@@ -174,11 +97,16 @@ document.addEventListener("DOMContentLoaded", () => {
     input.value = "";
     sendBtn.disabled = true;
 
+    showThinking();
+
     try {
-      const reply = await callGemini(text);
+      const reply = await askBackend(text);
+      hideThinking();
       addMessage(reply, "ai");
-    } catch {
-      addMessage("❌ Backend not reachable", "ai");
+    } catch (err) {
+      hideThinking();
+      addMessage("❌ AI backend not reachable", "ai");
+      console.error(err);
     } finally {
       sendBtn.disabled = false;
     }
@@ -189,8 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter") sendMessage();
   });
 
-  /* ---------- MIC ---------- */
-
+  /* ---------- MIC (OPTIONAL) ---------- */
   if ("webkitSpeechRecognition" in window && micBtn) {
     const rec = new webkitSpeechRecognition();
     rec.onresult = e => {
@@ -201,9 +128,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ---------- INIT ---------- */
-
   addMessage(
-    "Hello! I'm Lumix Core — model switching, thinking mode, and fallback are now active.",
+    "Hello! I'm Lumix Core. Ask me anything.",
     "ai"
   );
 });
+  
