@@ -7,9 +7,10 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import { fileURLToPath } from "url";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // -------------------------------
-// Path Fix (required for ES modules)
+// Path Fix (ESM)
 // -------------------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,40 +26,62 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Basic rate limiting (safe for Render)
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
-});
-app.use(limiter);
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+  })
+);
 
 // -------------------------------
-// Serve Frontend (HTML / CSS / JS)
+// Serve Frontend (for Render only)
 // -------------------------------
 app.use(express.static(__dirname));
 
 // -------------------------------
-// Homepage
+// Health Check
 // -------------------------------
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// -------------------------------
-// Example API route (optional)
-// -------------------------------
-app.get("/api/health", (req, res) => {
+app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "Lumix Core backend is running 🚀",
+    service: "Lumix Core Backend",
   });
 });
 
 // -------------------------------
-// Port (Render compatible)
+// AI SETUP (Gemini)
+// -------------------------------
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// -------------------------------
+// AI API ROUTE
+// -------------------------------
+app.post("/api/ai", async (req, res) => {
+  try {
+    const { prompt } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
+
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
+
+    res.json({ reply: response });
+  } catch (err) {
+    console.error("AI Error:", err);
+    res.status(500).json({ error: "AI request failed" });
+  }
+});
+
+// -------------------------------
+// PORT (Render compatible)
 // -------------------------------
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
   console.log(`✅ Lumix Core backend running on port ${PORT}`);
 });
