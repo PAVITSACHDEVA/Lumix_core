@@ -3,53 +3,44 @@ import cors from "cors";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const app = express();
-
-/* ✅ Proper CORS (this is the fix) */
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"]
-}));
-app.options("*", cors());
-
+app.use(cors());
 app.use(express.json());
 
-console.log("🔑 GEMINI_API_KEY length:", process.env.GEMINI_API_KEY?.length);
+const PORT = process.env.PORT || 10000;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const API_KEY = process.env.GEMINI_API_KEY;
+console.log("🔑 GEMINI_API_KEY length:", API_KEY?.length);
 
-/* Health check */
+const genAI = new GoogleGenerativeAI(API_KEY);
+
+/* health check */
 app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    keyPresent: !!process.env.GEMINI_API_KEY,
-    model: "models/gemini-1.5-flash",
-  });
+  res.json({ status: "ok" });
 });
 
-/* Gemini endpoint */
+/* AI endpoint */
 app.post("/api/ai", async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt) {
-      return res.status(400).json({ error: "Prompt is required" });
+      return res.status(400).json({ error: "Prompt missing" });
     }
 
+    // ✅ USE gemini-pro (NOT 1.5-flash)
     const model = genAI.getGenerativeModel({
-      model: "models/gemini-1.5-flash",
+      model: "gemini-pro",
     });
 
     const result = await model.generateContent(prompt);
-    const reply = result.response.text();
+    const response = result.response.text();
 
-    res.json({ reply });
+    res.json({ reply: response });
   } catch (err) {
-    console.error("❌ Gemini SDK error:", err);
+    console.error("❌ Gemini error:", err);
     res.status(500).json({ error: "Gemini backend error" });
   }
 });
 
-const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on ${PORT}`);
 });
