@@ -1,3 +1,5 @@
+console.log("🔑 GEMINI_API_KEY length:", process.env.GEMINI_API_KEY?.length);
+
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { GoogleGenerativeAI } from "@google/generative-ai";
