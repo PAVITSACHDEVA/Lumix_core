@@ -36,14 +36,20 @@ app.get("/health", (req, res) => {
 /* ---------- AI ENDPOINT ---------- */
 app.post("/api/ai", async (req, res) => {
   try {
-    const { prompt } = req.body;
+    let { prompt } = req.body;
+
+    if (typeof prompt !== "string") {
+      return res.status(400).json({ error: "Invalid prompt type" });
+    }
+
+    prompt = prompt.trim();
 
     if (!prompt) {
-      return res.status(400).json({ error: "Prompt missing" });
+      return res.status(400).json({ error: "Prompt is empty" });
     }
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash" // ✅ ONLY VALID MODEL
+      model: "gemini-1.5-flash"
     });
 
     const result = await model.generateContent(prompt);
@@ -52,8 +58,8 @@ app.post("/api/ai", async (req, res) => {
     res.json({ reply: text });
 
   } catch (err) {
-    console.error("❌ Gemini error:", err.message);
-    res.status(500).json({ error: "Gemini backend error" });
+    console.error("❌ Gemini error FULL:", err);
+    res.status(500).json({ error: err.message || "Gemini backend error" });
   }
 });
 

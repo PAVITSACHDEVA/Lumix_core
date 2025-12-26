@@ -50,8 +50,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
+   const text = input.value;
+if (!text || !text.trim()) return;
 
     addMessage(text, "user");
     input.value = "";
