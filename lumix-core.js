@@ -1,58 +1,52 @@
-const chatBox = document.getElementById("chat-box");
-const form = document.getElementById("chat-form");
-const promptInput = document.getElementById("prompt");
-const loader = document.getElementById("loader");
+const chatBox = document.getElementById('chat-box');
+const userInput = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+const loadingDots = document.getElementById('loading-dots');
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const prompt = promptInput.value.trim();
+sendBtn.addEventListener('click', () => {
+  const prompt = userInput.value.trim();
   if (!prompt) return;
+  
+  appendMessage(prompt, 'user-msg');
+  userInput.value = '';
+  loadingDots.style.display = 'block';
 
-  addMessage(prompt, "user");
-  promptInput.value = "";
-
-  showLoader(true);
-
-  try {
-    const response = await fetch("/api/ai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
+  fetch('https://lumix-core-5tl0.onrender.com/api/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  })
+    .then(res => res.json())
+    .then(data => {
+      loadingDots.style.display = 'none';
+      if (data.reply) {
+        animateTyping(data.reply, 'ai-msg');
+      } else {
+        appendMessage("⚠️ Error: No response from AI.", 'ai-msg');
+      }
+    })
+    .catch(() => {
+      loadingDots.style.display = 'none';
+      appendMessage("❌ Network error.", 'ai-msg');
     });
-
-    const data = await response.json();
-    const text = data.reply || "Something went wrong. Try again.";
-    addTypingEffect(text, "ai");
-  } catch (err) {
-    addMessage("Error fetching response.", "ai");
-  } finally {
-    showLoader(false);
-  }
 });
 
-function addMessage(text, type) {
-  const message = document.createElement("div");
-  message.classList.add("message", type);
-  message.innerText = text;
-  chatBox.appendChild(message);
+function appendMessage(msg, className) {
+  const div = document.createElement('div');
+  div.className = className;
+  div.textContent = msg;
+  chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function addTypingEffect(text, type) {
-  const message = document.createElement("div");
-  message.classList.add("message", type);
-  chatBox.appendChild(message);
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  let i = 0;
+function animateTyping(text, className) {
+  const div = document.createElement('div');
+  div.className = className;
+  chatBox.appendChild(div);
+  let index = 0;
   const interval = setInterval(() => {
-    message.innerText += text.charAt(i);
+    div.textContent += text.charAt(index++);
     chatBox.scrollTop = chatBox.scrollHeight;
-    i++;
-    if (i >= text.length) clearInterval(interval);
-  }, 15);
-}
-
-function showLoader(state) {
-  loader.hidden = !state;
+    if (index >= text.length) clearInterval(interval);
+  }, 25);
 }

@@ -1,27 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lumix Core AI</title>
   <link rel="stylesheet" href="styleAi.css" />
 </head>
 <body>
-  <div class="app-container">
-    <h1 class="title">Lumix Core AI</h1>
-    <div class="chat-box" id="chat-box">
-      <!-- Messages go here -->
+  <div id="chat-container">
+    <h2>Lumix Core AI</h2>
+    <div id="chat-box"></div>
+    <div id="input-container">
+      <input type="text" id="user-input" placeholder="Ask something..." />
+      <button id="send-btn">Send</button>
     </div>
-    <form id="chat-form">
-      <input
-        type="text"
-        id="prompt"
-        placeholder="Ask something..."
-        autocomplete="off"
-      />
-      <button type="submit">Send</button>
-    </form>
-    <div class="loader" id="loader" hidden></div>
+    <div id="loading-dots" style="display: none;">Thinking<span class="dots"></span></div>
   </div>
 
   <script src="lumix-core.js"></script>
