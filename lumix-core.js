@@ -1,6 +1,6 @@
 const chatBox = document.getElementById('chat-box');
 const userInput = document.getElementById('user-input');
-
+const sendBtn = document.getElementById('send-btn');
 const loadingDots = document.getElementById('loading-dots');
 document.addEventListener("DOMContentLoaded", () => {
   const sendBtn = document.querySelector('[data-testid="send-button"]');
