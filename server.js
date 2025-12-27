@@ -26,7 +26,7 @@ app.post("/api/ai", async (req, res) => {
 
     console.log("🟢 Prompt:", prompt);
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-pro-latest:generateContent?key=${GEMINI_API_KEY}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`;
 
     const response = await fetch(apiUrl, {
       method: "POST",
