@@ -2,54 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lumix Core AI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-   <link rel="icon" type="image/png" href="Assest/Logo.png" />
-
-  <!-- Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="styleAi.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lumix AI</title>
+  <link rel="stylesheet" href="styleAi.css" />
 </head>
 <body>
-
-<!-- ================= LOADER ================= -->
-<div id="loading">
-  <div class="loading-title">Lumix Core</div>
-  <div id="loadingText">Booting…</div>
-  <div class="loader-bar">
-    <div class="loader-bar-fill" id="loaderFill"></div>
-  </div>
-</div>
-
-<!-- ================= APP ================= -->
-<div id="app-container" style="display:none;">
-
-  <!-- Header -->
-  <div class="chat-header">
-    <h1>Lumix Core AI</h1>
-    <div style="margin-left:auto; display:flex; gap:10px;">
-      <button id="themeToggleHeader" class="lumix-btn">
-        <i class="bi bi-brightness-high"></i>
-      </button>
+  <div class="container">
+    <h1>Lumix AI Assistant</h1>
+    <div id="chat-history" class="chat-box"></div>
+    <div class="input-area">
+      <input type="text" id="promptInput" placeholder="Ask something..." />
+      <button id="sendBtn">Send</button>
     </div>
   </div>
 
-  <!-- Chat -->
-  <div class="chat-box" data-testid="chat-container"></div>
-
-  <!-- Input -->
-  <div class="chat-input-area">
-    <div class="input-wrapper">
-      <input data-testid="chat-input" placeholder="Ask something..." />
-      <button class="lumix-btn" data-testid="send-button">Send</button>
-    </div>
-  </div>
-
-</div>
-
-<!-- JS -->
-<script src="lumix-core.js"></script>
+  <script src="lumix-core.js"></script>
 </body>
 </html>

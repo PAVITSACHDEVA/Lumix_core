@@ -1,86 +1,74 @@
-const BACKEND_URL = "https://lumix-core-5tl0.onrender.com";
+const sendBtn = document.getElementById('sendBtn');
+const promptInput = document.getElementById('promptInput');
+const chatHistory = document.getElementById('chat-history');
 
-document.addEventListener("DOMContentLoaded", () => {
+let history = [];
 
-  const loading = document.getElementById("loading");
-  const loaderFill = document.getElementById("loaderFill");
-  const app = document.getElementById("app-container");
+function appendMessage(text, sender) {
+  const msg = document.createElement('div');
+  msg.className = `message ${sender}`;
+  msg.innerText = text;
+  chatHistory.appendChild(msg);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+}
 
-  const input = document.querySelector('[data-testid="chat-input"]');
-  const sendBtn = document.querySelector('[data-testid="send-button"]');
-  const chatBox = document.querySelector('[data-testid="chat-container"]');
+function addTyping() {
+  const typing = document.createElement('div');
+  typing.className = 'message bot typing';
+  typing.innerText = 'Typing...';
+  typing.id = 'typing-indicator';
+  chatHistory.appendChild(typing);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+}
 
-  /* -------- LOADER -------- */
-  let progress = 0;
-  const progressTimer = setInterval(() => {
-    progress = Math.min(progress + 12, 90);
-    loaderFill.style.width = progress + "%";
-  }, 250);
+function removeTyping() {
+  const typing = document.getElementById('typing-indicator');
+  if (typing) typing.remove();
+}
 
-  async function bootCheck() {
-    try {
-      const res = await fetch(`${BACKEND_URL}/health`);
-      if (!res.ok) throw new Error();
+async function sendPrompt() {
+  const prompt = promptInput.value.trim();
+  if (!prompt) return;
 
-      clearInterval(progressTimer);
-      loaderFill.style.width = "100%";
+  appendMessage(prompt, 'user');
+  promptInput.value = '';
+  addTyping();
 
-      setTimeout(() => {
-        // 🔥 CRITICAL FIX
-        loading.remove();              // remove overlay entirely
-        app.style.display = "flex";    // show app
-        input.disabled = false;
-        input.focus();
-      }, 300);
+  try {
+    const res = await fetch('/api/ai', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ prompt })
+    });
 
-    } catch {
-      setTimeout(bootCheck, 1200);
-    }
+    const data = await res.json();
+    removeTyping();
+
+    const reply = data.reply || '[No response]';
+    appendMessage(reply, 'bot');
+
+    // Store history
+    history.push({ prompt, reply });
+    localStorage.setItem('chatHistory', JSON.stringify(history));
+  } catch (err) {
+    removeTyping();
+    appendMessage('❌ Error: ' + err.message, 'bot');
   }
+}
 
-  bootCheck();
+sendBtn.addEventListener('click', sendPrompt);
+promptInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendPrompt();
+});
 
-  /* -------- CHAT -------- */
-  function addMessage(text, sender) {
-    const div = document.createElement("div");
-    div.className = `message ${sender}`;
-    div.textContent = text;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
+// Load past messages
+window.addEventListener('load', () => {
+  const stored = localStorage.getItem('chatHistory');
+  if (stored) {
+    history = JSON.parse(stored);
+    history.forEach(({ prompt, reply }) => {
+      appendMessage(prompt, 'user');
+      appendMessage(reply, 'bot');
+    });
   }
-
-  async function sendMessage() {
-   const text = input.value;
-if (!text || !text.trim()) return;
-
-    addMessage(text, "user");
-    input.value = "";
-
-    const thinking = document.createElement("div");
-    thinking.className = "message ai";
-    thinking.textContent = "Thinking…";
-    chatBox.appendChild(thinking);
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/ai`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: text })
-      });
-
-      const data = await res.json();
-      thinking.remove();
-      addMessage(data.reply, "ai");
-
-    } catch {
-      thinking.remove();
-      addMessage("❌ Backend error", "ai");
-    }
-  }
-
-  sendBtn.onclick = sendMessage;
-  input.addEventListener("keydown", e => {
-    if (e.key === "Enter") sendMessage();
-  });
-
 });

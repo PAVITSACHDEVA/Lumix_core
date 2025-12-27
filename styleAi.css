@@ -1,88 +1,80 @@
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0f0f0f;
-  color: #f4f4f4;
+  font-family: 'Segoe UI', sans-serif;
+  background: #121212;
+  color: #f0f0f0;
   margin: 0;
   padding: 0;
 }
 
 .container {
-  max-width: 700px;
-  margin: 40px auto;
-  padding: 2rem;
-  background: #1e1e1e;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0, 255, 170, 0.2);
+  width: 90%;
+  max-width: 800px;
+  margin: auto;
+  padding-top: 30px;
 }
 
 h1 {
   text-align: center;
-  color: #00ffd0;
-  margin-bottom: 30px;
-}
-
-form {
-  display: flex;
-  justify-content: space-between;
   margin-bottom: 20px;
+  color: #64b5f6;
 }
 
-input[type="text"] {
-  flex: 1;
-  padding: 12px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  outline: none;
-  background: #2c2c2c;
-  color: #fff;
-}
-
-button {
-  padding: 12px 18px;
-  margin-left: 10px;
-  font-size: 1.2rem;
-  background-color: #00ffd0;
-  color: #000;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-button:hover {
-  background-color: #00cfa5;
-}
-
-#responseArea {
-  min-height: 150px;
-  background: #101010;
-  border: 1px solid #333;
-  padding: 16px;
-  border-radius: 8px;
+.chat-box {
+  background: #1e1e1e;
+  padding: 20px;
+  height: 60vh;
   overflow-y: auto;
-  max-height: 300px;
-  white-space: pre-wrap;
-  font-family: monospace;
+  border-radius: 8px;
+  border: 1px solid #333;
 }
 
-.history-title {
-  margin-top: 30px;
-  font-size: 1.1rem;
-  color: #ccc;
+.input-area {
+  display: flex;
+  margin-top: 20px;
 }
 
-#historyList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.input-area input {
+  flex: 1;
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 4px 0 0 4px;
+  border: 1px solid #333;
+  background: #2b2b2b;
+  color: white;
 }
 
-#historyList li {
-  padding: 8px 0;
-  border-bottom: 1px solid #333;
-  color: #999;
+.input-area button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  background: #64b5f6;
+  color: black;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
 }
-#historyList li:last-child {
-  border-bottom: none;
-} 
+
+.message {
+  margin: 10px 0;
+}
+
+.message.user {
+  text-align: right;
+  color: #ffab40;
+}
+
+.message.bot {
+  text-align: left;
+  color: #80cbc4;
+}
+
+.typing {
+  font-style: italic;
+  opacity: 0.6;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0% {opacity: 0.2;}
+  50% {opacity: 1;}
+  100% {opacity: 0.2;}
+}
