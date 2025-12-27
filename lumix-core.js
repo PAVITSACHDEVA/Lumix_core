@@ -1,7 +1,11 @@
 const chatBox = document.getElementById('chat-box');
 const userInput = document.getElementById('user-input');
-const sendBtn = document.getElementById('send-btn');
+
 const loadingDots = document.getElementById('loading-dots');
+const sendBtn = document.querySelector('[data-testid="send-button"]');
+const input = document.querySelector('[data-testid="chat-input"]');
+
+sendBtn.onclick = sendMessage;
 
 sendBtn.addEventListener('click', () => {
   const prompt = userInput.value.trim();
