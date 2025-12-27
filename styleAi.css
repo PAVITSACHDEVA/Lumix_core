@@ -1,80 +1,96 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #121212;
-  color: #f0f0f0;
   margin: 0;
-  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #111;
+  color: #f2f2f2;
 }
 
-.container {
-  width: 90%;
-  max-width: 800px;
-  margin: auto;
-  padding-top: 30px;
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px;
 }
 
-h1 {
-  text-align: center;
+.title {
+  color: #00b894;
+  font-weight: bold;
   margin-bottom: 20px;
-  color: #64b5f6;
 }
 
 .chat-box {
-  background: #1e1e1e;
-  padding: 20px;
-  height: 60vh;
+  width: 100%;
+  max-width: 700px;
+  height: 500px;
   overflow-y: auto;
-  border-radius: 8px;
-  border: 1px solid #333;
-}
-
-.input-area {
-  display: flex;
-  margin-top: 20px;
-}
-
-.input-area input {
-  flex: 1;
-  padding: 10px;
-  font-size: 1rem;
-  border-radius: 4px 0 0 4px;
-  border: 1px solid #333;
-  background: #2b2b2b;
-  color: white;
-}
-
-.input-area button {
-  padding: 10px 20px;
-  font-size: 1rem;
-  background: #64b5f6;
-  color: black;
-  border: none;
-  border-radius: 0 4px 4px 0;
-  cursor: pointer;
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 15px;
 }
 
 .message {
-  margin: 10px 0;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  max-width: 90%;
+  border-radius: 10px;
+  line-height: 1.4em;
+  white-space: pre-wrap;
 }
 
-.message.user {
-  text-align: right;
-  color: #ffab40;
+.user {
+  background-color: #0984e3;
+  align-self: flex-end;
+  color: white;
+  margin-left: auto;
 }
 
-.message.bot {
-  text-align: left;
-  color: #80cbc4;
+.ai {
+  background-color: #333;
+  align-self: flex-start;
+  color: #00cec9;
+  margin-right: auto;
 }
 
-.typing {
-  font-style: italic;
-  opacity: 0.6;
-  animation: blink 1s infinite;
+form {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
 
-@keyframes blink {
-  0% {opacity: 0.2;}
-  50% {opacity: 1;}
-  100% {opacity: 0.2;}
+input[type="text"] {
+  width: 300px;
+  padding: 10px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+}
+
+button {
+  padding: 10px 16px;
+  font-size: 1rem;
+  background-color: #00b894;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.loader {
+  width: 30px;
+  height: 30px;
+  border: 4px solid #00cec9;
+  border-top: 4px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-top: 10px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+button:hover {
+  background-color: #019875;
 }

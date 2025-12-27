@@ -1,74 +1,58 @@
-const sendBtn = document.getElementById('sendBtn');
-const promptInput = document.getElementById('promptInput');
-const chatHistory = document.getElementById('chat-history');
+const chatBox = document.getElementById("chat-box");
+const form = document.getElementById("chat-form");
+const promptInput = document.getElementById("prompt");
+const loader = document.getElementById("loader");
 
-let history = [];
-
-function appendMessage(text, sender) {
-  const msg = document.createElement('div');
-  msg.className = `message ${sender}`;
-  msg.innerText = text;
-  chatHistory.appendChild(msg);
-  chatHistory.scrollTop = chatHistory.scrollHeight;
-}
-
-function addTyping() {
-  const typing = document.createElement('div');
-  typing.className = 'message bot typing';
-  typing.innerText = 'Typing...';
-  typing.id = 'typing-indicator';
-  chatHistory.appendChild(typing);
-  chatHistory.scrollTop = chatHistory.scrollHeight;
-}
-
-function removeTyping() {
-  const typing = document.getElementById('typing-indicator');
-  if (typing) typing.remove();
-}
-
-async function sendPrompt() {
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
   const prompt = promptInput.value.trim();
   if (!prompt) return;
 
-  appendMessage(prompt, 'user');
-  promptInput.value = '';
-  addTyping();
+  addMessage(prompt, "user");
+  promptInput.value = "";
+
+  showLoader(true);
 
   try {
-    const res = await fetch('/api/ai', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ prompt })
+    const response = await fetch("/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
     });
 
-    const data = await res.json();
-    removeTyping();
-
-    const reply = data.reply || '[No response]';
-    appendMessage(reply, 'bot');
-
-    // Store history
-    history.push({ prompt, reply });
-    localStorage.setItem('chatHistory', JSON.stringify(history));
+    const data = await response.json();
+    const text = data.reply || "Something went wrong. Try again.";
+    addTypingEffect(text, "ai");
   } catch (err) {
-    removeTyping();
-    appendMessage('❌ Error: ' + err.message, 'bot');
+    addMessage("Error fetching response.", "ai");
+  } finally {
+    showLoader(false);
   }
+});
+
+function addMessage(text, type) {
+  const message = document.createElement("div");
+  message.classList.add("message", type);
+  message.innerText = text;
+  chatBox.appendChild(message);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-sendBtn.addEventListener('click', sendPrompt);
-promptInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendPrompt();
-});
+function addTypingEffect(text, type) {
+  const message = document.createElement("div");
+  message.classList.add("message", type);
+  chatBox.appendChild(message);
+  chatBox.scrollTop = chatBox.scrollHeight;
 
-// Load past messages
-window.addEventListener('load', () => {
-  const stored = localStorage.getItem('chatHistory');
-  if (stored) {
-    history = JSON.parse(stored);
-    history.forEach(({ prompt, reply }) => {
-      appendMessage(prompt, 'user');
-      appendMessage(reply, 'bot');
-    });
-  }
-});
+  let i = 0;
+  const interval = setInterval(() => {
+    message.innerText += text.charAt(i);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    i++;
+    if (i >= text.length) clearInterval(interval);
+  }, 15);
+}
+
+function showLoader(state) {
+  loader.hidden = !state;
+}
