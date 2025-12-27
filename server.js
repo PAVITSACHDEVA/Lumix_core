@@ -26,10 +26,14 @@ app.get("/health", (req, res) => {
 });
 
 app.post("/api/ai", async (req, res) => {
+  console.log("🟡 /api/ai HIT");
+  console.log("🟡 BODY:", req.body);
+
   try {
     const prompt = req.body?.prompt;
 
     if (!prompt || typeof prompt !== "string") {
+      console.log("🔴 Invalid prompt");
       return res.status(400).json({ error: "Invalid prompt" });
     }
 
