@@ -2,10 +2,21 @@ const chatBox = document.getElementById('chat-box');
 const userInput = document.getElementById('user-input');
 
 const loadingDots = document.getElementById('loading-dots');
-const sendBtn = document.querySelector('[data-testid="send-button"]');
-const input = document.querySelector('[data-testid="chat-input"]');
+document.addEventListener("DOMContentLoaded", () => {
+  const sendBtn = document.querySelector('[data-testid="send-button"]');
+  const input = document.querySelector('[data-testid="chat-input"]');
 
-sendBtn.onclick = sendMessage;
+  if (!sendBtn || !input) {
+    console.error("❌ Send button or input not found");
+    return;
+  }
+
+  sendBtn.onclick = sendMessage;
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
+});
 
 sendBtn.addEventListener('click', () => {
   const prompt = userInput.value.trim();
