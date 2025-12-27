@@ -1,8 +1,9 @@
-/* ================= GLOBAL ================= */
+/* ===== RESET ===== */
 * {
   box-sizing: border-box;
 }
 
+/* ===== BODY ===== */
 body {
   margin: 0;
   font-family: "Segoe UI", system-ui, sans-serif;
@@ -12,59 +13,52 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  overflow: auto;
 }
 
-/* ================= LIGHT MODE ================= */
+/* ===== LIGHT MODE ===== */
 body.light {
   background: #f4f6f8;
   color: #111;
 }
 
-/* ================= CHAT CONTAINER ================= */
+/* ===== CONTAINER ===== */
 #chat-container {
   width: 90%;
   max-width: 720px;
   background: #1a1a1a;
   border-radius: 12px;
-  padding: 18px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 18px rgba(0, 255, 170, 0.18);
 }
 
 body.light #chat-container {
   background: #ffffff;
-  box-shadow: 0 0 18px rgba(0, 0, 0, 0.12);
 }
 
+/* ===== TITLE ===== */
 h2 {
   text-align: center;
   color: #1ce3b3;
   margin-bottom: 10px;
 }
 
-/* ================= CONTROLS ================= */
+/* ===== CONTROLS ===== */
 .controls {
   display: flex;
-  gap: 8px;
   justify-content: center;
-  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 10px;
 }
 
 .controls button {
   padding: 6px 10px;
-  font-size: 13px;
-  border-radius: 6px;
   border: none;
+  border-radius: 6px;
   cursor: pointer;
   background: #2b2b2b;
   color: #fff;
-  transition: background 0.2s ease;
-}
-
-.controls button:hover {
-  background: #3a3a3a;
 }
 
 body.light .controls button {
@@ -72,12 +66,12 @@ body.light .controls button {
   color: #111;
 }
 
-/* ================= CHAT BOX ================= */
+/* ===== CHAT BOX ===== */
 #chat-box {
   flex: 1;
   overflow-y: auto;
   background: #121212;
-  padding: 12px;
+  padding: 10px;
   border-radius: 8px;
   margin-bottom: 10px;
 }
@@ -86,16 +80,14 @@ body.light #chat-box {
   background: #f1f1f1;
 }
 
-/* ================= MESSAGES ================= */
+/* ===== MESSAGES ===== */
 .user-msg,
 .ai-msg {
   max-width: 80%;
   padding: 10px 14px;
   border-radius: 16px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   word-wrap: break-word;
-  white-space: pre-wrap;
-  line-height: 1.4;
 }
 
 .user-msg {
@@ -108,7 +100,6 @@ body.light #chat-box {
   align-self: flex-start;
   background: #2e2e2e;
   color: #e6e6e6;
-  border: 1px solid #2ba489;
 }
 
 body.light .ai-msg {
@@ -117,7 +108,7 @@ body.light .ai-msg {
   border: 1px solid #ccc;
 }
 
-/* ================= INPUT ================= */
+/* ===== INPUT ===== */
 #input-container {
   display: flex;
   gap: 8px;
@@ -132,27 +123,17 @@ body.light .ai-msg {
   outline: none;
 }
 
-body.light #user-input {
-  background: #ffffff;
-  border: 1px solid #ccc;
-}
-
 #send-btn {
   padding: 10px 14px;
   border-radius: 6px;
   border: none;
-  font-weight: bold;
   cursor: pointer;
+  font-weight: bold;
   background: #1ce3b3;
   color: #000;
-  transition: background 0.2s ease;
 }
 
-#send-btn:hover {
-  background: #17b997;
-}
-
-/* ================= LOADING ================= */
+/* ===== LOADING ===== */
 #loading-dots {
   text-align: center;
   font-size: 13px;
@@ -166,35 +147,24 @@ body.light #user-input {
 
 @keyframes dots {
   0% { content: ""; }
-  25% { content: "."; }
-  50% { content: ".."; }
-  75% { content: "..."; }
+  33% { content: "."; }
+  66% { content: ".."; }
+  100% { content: "..."; }
 }
 
-/* ================= CODE BLOCKS ================= */
+/* ===== CODE BLOCKS ===== */
 pre {
-  background: #000000;
+  background: #000;
   color: #00ffcc;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 10px;
+  border-radius: 6px;
   overflow-x: auto;
-  font-size: 14px;
-  margin-top: 8px;
 }
 
 code {
   font-family: Consolas, monospace;
 }
-
-/* ================= PROJECT FORMAT HELPERS ================= */
-b {
-  font-weight: 700;
-}
-
-i {
-  font-style: italic;
-}
-
-u {
-  text-decoration: underline;
+body.light pre {
+  background: #f4f4f4;
+  color: #005f5f;
 }

@@ -1,63 +1,75 @@
-/* ---------------- USER ID ---------------- */
+/* ================= FORCE PAGE TO BE INTERACTIVE ================= */
+document.body.style.overflow = "auto";
+
+/* ================= USER ID ================= */
 let userId = localStorage.getItem("lumix_user");
 if (!userId) {
   userId = "user_" + crypto.randomUUID();
   localStorage.setItem("lumix_user", userId);
 }
 
-/* ---------------- DOM ---------------- */
+/* ================= DOM ================= */
 const chatBox = document.getElementById("chat-box");
 const input = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 const loading = document.getElementById("loading-dots");
 
-/* ---------------- MARKDOWN ---------------- */
-function renderMarkdown(t) {
-  return t
+/* ================= MARKDOWN RENDER ================= */
+function renderMarkdown(text) {
+  return text
+    .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
     .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
     .replace(/\*(.*?)\*/g, "<i>$1</i>")
     .replace(/__(.*?)__/g, "<u>$1</u>")
-    .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
     .replace(/\n/g, "<br>");
 }
 
-/* ---------------- CHAT ---------------- */
-function addMsg(text, cls) {
-  const d = document.createElement("div");
-  d.className = cls;
-  d.innerHTML = renderMarkdown(text);
-  chatBox.appendChild(d);
+/* ================= CHAT UI ================= */
+function addMessage(text, className) {
+  const div = document.createElement("div");
+  div.className = className;
+  div.innerHTML = renderMarkdown(text);
+  chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+/* ================= SEND MESSAGE ================= */
 async function sendMessage() {
   const prompt = input.value.trim();
   if (!prompt) return;
 
-  addMsg(prompt, "user-msg");
+  addMessage(prompt, "user-msg");
   input.value = "";
   loading.style.display = "block";
 
-  const res = await fetch("https://lumix-core-5tl0.onrender.com/api/ai", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, userId })
-  });
+  try {
+    const res = await fetch("https://lumix-core-5tl0.onrender.com/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, userId })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
+    addMessage(data.reply || "⚠️ No response", "ai-msg");
+  } catch (err) {
+    addMessage("❌ Network error", "ai-msg");
+  }
+
   loading.style.display = "none";
-  addMsg(data.reply, "ai-msg");
 }
 
-sendBtn.onclick = sendMessage;
-input.onkeydown = e => e.key === "Enter" && sendMessage();
+/* ================= EVENTS ================= */
+sendBtn.addEventListener("click", sendMessage);
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") sendMessage();
+});
 
-/* ---------------- SETTINGS ---------------- */
-async function saveSettings(s) {
+/* ================= SETTINGS ================= */
+async function saveSettings(settings) {
   await fetch("https://lumix-core-5tl0.onrender.com/api/settings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, ...s })
+    body: JSON.stringify({ userId, ...settings })
   });
 }
 
@@ -69,3 +81,12 @@ function setTheme(theme) {
   document.body.className = theme;
   saveSettings({ theme });
 }
+
+/* ================= FINAL SAFETY ================= */
+document.addEventListener("DOMContentLoaded", () => {
+  input.disabled = false;
+  input.readOnly = false;
+  input.style.pointerEvents = "auto";
+  input.focus();
+});
+/* ================= INITIALIZE THEME ================= */

@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Lumix Core AI</title>
+
+  <!-- ONLY THIS CSS -->
   <link rel="stylesheet" href="styleAi.css" />
 </head>
 <body>
+
   <div id="chat-container">
     <h2>Lumix Core AI</h2>
 
@@ -19,13 +23,21 @@
     <div id="chat-box"></div>
 
     <div id="input-container">
-      <input id="user-input" placeholder="Ask something…" />
+      <input
+        id="user-input"
+        type="text"
+        placeholder="Ask something..."
+        autocomplete="off"
+      />
       <button id="send-btn">Send</button>
     </div>
 
-    <div id="loading-dots" style="display:none;">Thinking<span class="dots"></span></div>
+    <div id="loading-dots" style="display:none;">
+      Thinking<span class="dots"></span>
+    </div>
   </div>
 
+  <!-- ONLY THIS SCRIPT -->
   <script src="lumix-core.js"></script>
 </body>
 </html>
