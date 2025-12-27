@@ -32,13 +32,36 @@ app.post("/api/ai", async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }]
-          }
-        ]
-      })
+  contents: [
+    {
+      role: "system",
+      parts: [
+        {
+          text: `
+You are Lumix Core AI.
+
+STRICT RULES:
+1. Always respect conversation context.
+2. If user says "project format":
+   - Use bold, italic, and underline.
+   - Structured sections.
+   - Neat and concise.
+3. Code must ALWAYS be in proper code blocks with language tags.
+4. Maths must be clean, step-by-step, no decorative symbols.
+5. Do NOT give long answers unless asked.
+6. Do NOT use --- or *** separators.
+7. Always finish the answer properly.
+`
+        }
+      ]
+    },
+    {
+      role: "user",
+      parts: [{ text: prompt }]
+    }
+  ]
+})
+
     });
 
     const data = await response.json();

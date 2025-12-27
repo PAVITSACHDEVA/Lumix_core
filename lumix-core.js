@@ -64,3 +64,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === 'Enter') sendMessage();
   });
 });
+let projectMode = false;
+
+function toggleProjectMode() {
+  projectMode = !projectMode;
+}
+
+function sendMessage() {
+  let prompt = userInput.value.trim();
+  if (projectMode) {
+    prompt = "project format: " + prompt;
+  }
+}
