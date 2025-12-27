@@ -9,12 +9,12 @@ const PORT = process.env.PORT || 10000;
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-/* -------------------- HEALTH CHECK -------------------- */
+/* -------------------- HEALTH -------------------- */
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-/* -------------------- AI ENDPOINT -------------------- */
+/* -------------------- AI -------------------- */
 app.post("/api/ai", async (req, res) => {
   try {
     const prompt = req.body?.prompt;
@@ -26,7 +26,7 @@ app.post("/api/ai", async (req, res) => {
     console.log("🟢 Prompt:", prompt);
 
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro:generateContent",
       {
         method: "POST",
         headers: {
@@ -47,13 +47,13 @@ app.post("/api/ai", async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("🔴 Gemini v1 ERROR:", data);
+      console.error("🔴 Gemini ERROR:", data);
       return res.status(500).json(data);
     }
 
     const reply =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ??
-      "No response from Gemini";
+      "No response";
 
     console.log("🟢 Gemini replied");
 
@@ -65,7 +65,7 @@ app.post("/api/ai", async (req, res) => {
   }
 });
 
-/* -------------------- START SERVER -------------------- */
+/* -------------------- START -------------------- */
 app.listen(PORT, () => {
   console.log(`🚀 Lumix Core backend running on ${PORT}`);
 });
