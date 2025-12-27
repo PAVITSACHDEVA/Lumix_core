@@ -1,78 +1,71 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const chatBox = document.getElementById('chat-box');
-  const userInput = document.getElementById('user-input');
-  const sendBtn = document.getElementById('send-btn');
-  const loadingDots = document.getElementById('loading-dots');
-
-  if (!sendBtn || !userInput) {
-    console.error("❌ Send button or input not found");
-    return;
-  }
-
-  function appendMessage(msg, className) {
-    const div = document.createElement('div');
-    div.className = className;
-    div.textContent = msg;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
-
-  function animateTyping(text, className) {
-    const div = document.createElement('div');
-    div.className = className;
-    chatBox.appendChild(div);
-    let index = 0;
-    const interval = setInterval(() => {
-      div.textContent += text.charAt(index++);
-      chatBox.scrollTop = chatBox.scrollHeight;
-      if (index >= text.length) clearInterval(interval);
-    }, 25);
-  }
-
-  async function sendMessage() {
-    const prompt = userInput.value.trim();
-    if (!prompt) return;
-
-    appendMessage(prompt, 'user-msg');
-    userInput.value = '';
-    loadingDots.style.display = 'block';
-
-    try {
-      const res = await fetch('https://lumix-core-5tl0.onrender.com/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-
-      const data = await res.json();
-      loadingDots.style.display = 'none';
-
-      if (data.reply) {
-        animateTyping(data.reply, 'ai-msg');
-      } else {
-        appendMessage("⚠️ No response from AI.", 'ai-msg');
-      }
-    } catch (err) {
-      loadingDots.style.display = 'none';
-      appendMessage("❌ Network error.", 'ai-msg');
-    }
-  }
-
-  sendBtn.addEventListener('click', sendMessage);
-
-  userInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sendMessage();
-  });
-});
-let projectMode = false;
-
-function toggleProjectMode() {
-  projectMode = !projectMode;
+/* ---------------- USER ID ---------------- */
+let userId = localStorage.getItem("lumix_user");
+if (!userId) {
+  userId = "user_" + crypto.randomUUID();
+  localStorage.setItem("lumix_user", userId);
 }
 
-function sendMessage() {
-  let prompt = userInput.value.trim();
-  if (projectMode) {
-    prompt = "project format: " + prompt;
-  }
+/* ---------------- DOM ---------------- */
+const chatBox = document.getElementById("chat-box");
+const input = document.getElementById("user-input");
+const sendBtn = document.getElementById("send-btn");
+const loading = document.getElementById("loading-dots");
+
+/* ---------------- MARKDOWN ---------------- */
+function renderMarkdown(t) {
+  return t
+    .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+    .replace(/\*(.*?)\*/g, "<i>$1</i>")
+    .replace(/__(.*?)__/g, "<u>$1</u>")
+    .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+    .replace(/\n/g, "<br>");
+}
+
+/* ---------------- CHAT ---------------- */
+function addMsg(text, cls) {
+  const d = document.createElement("div");
+  d.className = cls;
+  d.innerHTML = renderMarkdown(text);
+  chatBox.appendChild(d);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+async function sendMessage() {
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  addMsg(prompt, "user-msg");
+  input.value = "";
+  loading.style.display = "block";
+
+  const res = await fetch("https://lumix-core-5tl0.onrender.com/api/ai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, userId })
+  });
+
+  const data = await res.json();
+  loading.style.display = "none";
+  addMsg(data.reply, "ai-msg");
+}
+
+sendBtn.onclick = sendMessage;
+input.onkeydown = e => e.key === "Enter" && sendMessage();
+
+/* ---------------- SETTINGS ---------------- */
+async function saveSettings(s) {
+  await fetch("https://lumix-core-5tl0.onrender.com/api/settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, ...s })
+  });
+}
+
+function setMode(mode) {
+  saveSettings({ mode });
+}
+
+function setTheme(theme) {
+  document.body.className = theme;
+  saveSettings({ theme });
 }

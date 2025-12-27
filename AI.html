@@ -1,22 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
   <title>Lumix Core AI</title>
   <link rel="stylesheet" href="styleAi.css" />
 </head>
 <body>
   <div id="chat-container">
     <h2>Lumix Core AI</h2>
-    <div id="chat-box"></div>
-    <div id="input-container">
-      <input type="text" id="user-input" placeholder="Ask something..." />
-      <button onclick="toggleProjectMode()">Project Format</button>
 
+    <div class="controls">
+      <button onclick="setMode('exam')">Exam</button>
+      <button onclick="setMode('project')">Project</button>
+      <button onclick="setTheme('dark')">Dark</button>
+      <button onclick="setTheme('light')">Light</button>
+    </div>
+
+    <div id="chat-box"></div>
+
+    <div id="input-container">
+      <input id="user-input" placeholder="Ask something…" />
       <button id="send-btn">Send</button>
     </div>
-    <div id="loading-dots" style="display: none;">Thinking<span class="dots"></span></div>
+
+    <div id="loading-dots" style="display:none;">Thinking<span class="dots"></span></div>
   </div>
 
   <script src="lumix-core.js"></script>

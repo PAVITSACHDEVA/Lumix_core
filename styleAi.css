@@ -1,111 +1,57 @@
 body {
-  margin: 0;
-  background-color: #0e0e0e;
-  font-family: 'Segoe UI', sans-serif;
-  color: #f0f0f0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  background:#0e0e0e;
+  color:#f0f0f0;
+  font-family:Segoe UI;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+body.light {
+  background:#f5f5f5;
+  color:#111;
 }
 
 #chat-container {
-  width: 90%;
-  max-width: 700px;
-  background-color: #1a1a1a;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 0 15px rgba(0, 255, 170, 0.2);
-  display: flex;
-  flex-direction: column;
+  width:700px;
+  background:#1a1a1a;
+  padding:20px;
+  border-radius:10px;
 }
 
-h2 {
-  color: #1ce3b3;
-  text-align: center;
+.controls button {
+  margin:4px;
 }
 
 #chat-box {
-  height: 400px;
-  overflow-y: auto;
-  background-color: #121212;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-}
-
-.user-msg, .ai-msg {
-  margin-bottom: 10px;
-  padding: 10px 15px;
-  border-radius: 20px;
-  max-width: 80%;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  height:400px;
+  overflow:auto;
+  background:#121212;
+  padding:10px;
+  margin:10px 0;
 }
 
 .user-msg {
-  align-self: flex-end;
-  background-color: #0f62fe;
-  color: #fff;
+  text-align:right;
+  background:#0f62fe;
+  margin:5px;
+  padding:8px;
+  border-radius:10px;
 }
 
 .ai-msg {
-  align-self: flex-start;
-  background-color: #2e2e2e;
-  color: #ddd;
-  border: 1px solid #2ba489;
+  background:#2e2e2e;
+  margin:5px;
+  padding:8px;
+  border-radius:10px;
 }
 
-#input-container {
-  display: flex;
-  gap: 10px;
+pre {
+  background:#000;
+  padding:10px;
+  overflow:auto;
 }
-
-#user-input {
-  flex-grow: 1;
-  padding: 10px;
-  border-radius: 5px;
-  border: none;
-  font-size: 1em;
-}
-
-#send-btn {
-  background-color: #1ce3b3;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-#send-btn:hover {
-  background-color: #17b997;
-}
-
-#loading-dots {
-  margin-top: 10px;
-  text-align: center;
-  color: #999;
-  font-size: 0.95em;
-}
-
-.dots::after {
-  content: '...';
-  animation: dots 1s steps(5, end) infinite;
-}
-
-@keyframes dots {
-  0%, 20% {
-    content: '';
-  }
-  40% {
-    content: '.';
-  }
-  60% {
-    content: '..';
-  }
-  80%, 100% {
-    content: '...';
-  }
+pre code {
+  color:#0f0;
 }
