@@ -84,4 +84,3 @@ if (!text || !text.trim()) return;
   });
 
 });
-'
