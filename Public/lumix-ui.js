@@ -1,53 +1,34 @@
 import { streamAIResponse } from "./api.js";
 
-let currentController = null;
-const USER_ID = "default-user"; // later: real user system
-
-const WEATHER_API_KEY = "86af92bb29ea4c278df101649250409";
+const USER_ID = "default-user";
+let controller = null;
 
 const chatBox = document.getElementById("chatBox");
 const input = document.getElementById("chatInput");
 const sendBtn = document.getElementById("sendBtn");
-const avatarToggle = document.getElementById("avatar-panel-toggle");
 const loading = document.getElementById("loading");
-const themeButtons = [
-  document.getElementById("themeToggleHeader"),
-  document.getElementById("themeToggleLoading")
-].filter(Boolean);
 
-/* THEME */
-function toggleTheme() {
-  document.body.classList.toggle("light-mode");
-}
-themeButtons.forEach(b => b.onclick = toggleTheme);
-
-/* LOADER */
 window.onload = () => {
-  setTimeout(() => loading.style.display = "none", 1200);
+  loading.style.display = "none"; // ✅ FIXED
 };
 
-/* AVATAR PANEL */
-avatarToggle.onclick = () => {
-  document.body.classList.toggle("panel-open");
-};
-function addCursor(el) {
-  const cursor = document.createElement("span");
-  cursor.className = "typing-cursor";
-  cursor.textContent = " ▍";
-  el.appendChild(cursor);
-  return cursor;
-}
-
-/* CHAT UI ONLY */
-function addMessage(text, who="ai") {
+function addMessage(text, who) {
   const div = document.createElement("div");
   div.className = `message ${who}`;
-  div.innerText = text;
+  div.textContent = text;
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
+  return div;
 }
 
-/* SEND (placeholder for backend) */
+function addCursor(el) {
+  const c = document.createElement("span");
+  c.className = "typing-cursor";
+  c.textContent = " ▍";
+  el.appendChild(c);
+  return c;
+}
+
 sendBtn.onclick = () => {
   const q = input.value.trim();
   if (!q) return;
@@ -55,46 +36,28 @@ sendBtn.onclick = () => {
   addMessage(q, "user");
   input.value = "";
 
-  const aiDiv = document.createElement("div");
-  aiDiv.className = "message ai";
-  chatBox.appendChild(aiDiv);
+  const ai = addMessage("", "ai");
+  const cursor = addCursor(ai);
 
-  const cursor = addCursor(aiDiv);
-
-  currentController = streamAIResponse({
+  controller = streamAIResponse({
     prompt: q,
     userId: USER_ID,
-    onToken(token) {
+    onToken(t) {
       cursor.remove();
-      aiDiv.textContent += token;
-      aiDiv.appendChild(cursor);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      ai.textContent += t;
+      ai.appendChild(cursor);
     },
     onEnd() {
       cursor.remove();
-    },
-    onError() {
-      cursor.remove();
-      aiDiv.textContent += "\n⚠️ Error";
     }
   });
 };
 
-/* ENTER */
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter") sendBtn.click();
-});
-
-/* INIT */
-addMessage("Hello! Lumix Core UI is ready.", "ai");
-/* ================= PROMPT BUILDER ================= */
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && currentController) {
-    currentController.abort();
-    currentController = null;
+  if (e.key === "Escape" && controller) {
+    controller.abort();
+    controller = null;
   }
 });
-/* ================= IN-MEMORY STORAGE ================= */
-// (moved to server.js)
-/* ================= AI ENDPOINT ================= */
-// (moved to server.js)
+
+addMessage("Lumix Core ready 🚀", "ai");
