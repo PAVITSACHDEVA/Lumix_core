@@ -167,3 +167,16 @@ body.light-mode #ai-avatar-panel {
     transform: none;
   }
 }
+/* ===== FORCE DESKTOP WIDTH ===== */
+@media (min-width: 1200px) {
+  #main-wrapper {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #app-container {
+    width: 100%;
+    max-width: 1200px;   /* REAL desktop width */
+    min-height: 82vh;
+  }
+}
