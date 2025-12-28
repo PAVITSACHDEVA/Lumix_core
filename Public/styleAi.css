@@ -210,3 +210,64 @@ body.light-mode #ai-avatar-panel {
 .chat-box {
   overflow-y: auto;
 }
+/* --- Modern Toggle Switch --- */
+.lumix-switch {
+  position: relative;
+  display: inline-block;
+  width: 45px;
+  height: 24px;
+}
+
+.lumix-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.lumix-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: .4s;
+  border-radius: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.lumix-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+input:checked + .lumix-slider {
+  background: linear-gradient(45deg, #007bff, #00d4ff);
+}
+
+input:checked + .lumix-slider:before {
+  transform: translateX(20px);
+}
+
+/* --- Send Button Hover Effect --- */
+.send-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.send-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+}
+
+.send-action:active {
+  transform: translateY(0);
+}

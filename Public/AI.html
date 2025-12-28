@@ -5,99 +5,156 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lumix Core AI Chat Assistant</title>
 
-  <!-- Icons & libs -->
   <link rel="icon" href="assets/Logo.png" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.min.css">
 
-  <!-- Markdown + Math -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- Syntax Highlight -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css">
 
-  <!-- Lumix Theme -->
   <link rel="stylesheet" href="styleAi.css">
+  
+  <style>
+    /* Inline fixes for the components we discussed */
+    #main-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    /* Modern Toggle Switch Styling */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 22px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: .4s;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 4px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+    }
+
+    .slider.round { border-radius: 34px; }
+    .slider.round:before { border-radius: 50%; }
+
+    input:checked + .slider { background: #007bff; }
+    input:checked + .slider:before { transform: translateX(20px); }
+    
+    input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
+
+    /* Centering the container */
+    #app-container {
+      width: 100%;
+      max-width: 1100px;
+      min-height: 85vh;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- 🔵 Loader -->
 <div id="loading">
   <div class="loading-title" id="loadingText">Lumix Core</div>
   <div class="loader-bar">
     <div class="loader-bar-fill" id="loaderFill"></div>
   </div>
-  <button id="themeToggleLoading" class="lumix-btn">
+  <button id="themeToggleLoading" class="lumix-btn mt-3">
     <i class="bi bi-brightness-high"></i>
     <span>Light Mode</span>
   </button>
 </div>
 
-<!-- Avatar Toggle -->
 <button id="avatar-panel-toggle" title="Toggle AI Panel">
   <i class="bi bi-person-bounding-box"></i>
 </button>
 
 <div id="main-wrapper">
 
-  <!-- Avatar Panel -->
-  <div id="ai-avatar-panel">
+  <aside id="ai-avatar-panel">
     <div class="avatar-container">
       <div class="ai-avatar"></div>
       <h3>Lumix Core</h3>
     </div>
-    <div class="feature-control">
-      <span>Voice Output</span>
-      <label class="switch">
-        <input type="checkbox" disabled>
+    
+   <div class="feature-control d-flex justify-content-between align-items-center p-3">
+    <span>Voice Output</span>
+    <label class="switch">
+       <input type="checkbox" id="voiceOutputToggle"/>
         <span class="slider round"></span>
-      </label>
-    </div>
-    <div class="history-container">
+    </label>
+</div>
+    <div class="history-container p-3">
       <h4>Interaction History</h4>
-      <div id="chat-history-log">Coming soon</div>
+      <div id="chat-history-log" class="small text-muted">Coming soon...</div>
     </div>
-  </div>
+  </aside>
 
-  <!-- App -->
-  <div id="app-container">
+  <main id="app-container">
 
-    <div id="navbara">
+    <nav id="navbara">
       <a href="index.html" class="gradient-text">Home</a>
       <a href="Genartor.html" class="gradient-text">Image Generator</a>
       <a href="Converter.html" class="gradient-text">Converter</a>
       <a href="ABOUT.html" class="gradient-text">About</a>
-    </div>
+    </nav>
 
-    <div class="chat-header">
+    <header class="chat-header d-flex justify-content-between align-items-center">
       <h1>Chat Assistant</h1>
       <button id="themeToggleHeader" class="lumix-btn">
         <i class="bi bi-brightness-high"></i>
         <span>Light Mode</span>
       </button>
-    </div>
+    </header>
 
-    <div class="chat-box" id="chatBox"></div>
+    <div class="chat-box" id="chatBox">
+      </div>
 
-    <div id="context-suggestions"></div>
+    <div id="context-suggestions" class="px-3 mb-2"></div>
 
-    <div class="chat-input-area">
-      <div class="input-wrapper">
-        <input id="chatInput" placeholder="Ask me anything…" />
-        <button id="sendBtn" class="lumix-btn">
+    <footer class="chat-input-area">
+      <div class="input-wrapper d-flex align-items-center">
+        <input id="chatInput" placeholder="Ask me anything…" autocomplete="off" />
+        <button id="sendBtn" class="lumix-btn send-action ms-2">
           <i class="bi bi-send-fill"></i>
+          <span class="d-none d-md-inline ms-1">Send</span>
         </button>
       </div>
-    </div>
+    </footer>
 
-  </div>
+  </main>
 </div>
 
 <div id="tooltip" class="tooltip"></div>
 
-<!-- JS -->
 <script src="lumix-ui.js"></script>
+
 </body>
 </html>
