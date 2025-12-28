@@ -58,55 +58,45 @@ ${prompt}
 }
 
 /* ================= AI ENDPOINT ================= */
-app.post("/api/ai", async (req, res) => {
+app.post("/api/ai/stream", async (req, res) => {
+  const { prompt, userId } = req.body;
+  if (!prompt || !userId) {
+    return res.status(400).end();
+  }
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  if (!chatHistory[userId]) chatHistory[userId] = [];
+  chatHistory[userId].push({ role: "user", text: prompt });
+
+  const fullPrompt = buildPrompt(userId, prompt);
+
   try {
-    const { prompt, userId } = req.body;
-
-    if (!prompt || !userId) {
-      return res.status(400).json({ error: "Prompt or userId missing" });
-    }
-
-    if (!chatHistory[userId]) chatHistory[userId] = [];
-
-    chatHistory[userId].push({ role: "user", text: prompt });
-
-    if (chatHistory[userId].length > 10) {
-      chatHistory[userId].shift();
-    }
-
-    const fullPrompt = buildPrompt(userId, prompt);
-
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:streamGenerateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: fullPrompt }]
-            }
-          ]
+          contents: [{ role: "user", parts: [{ text: fullPrompt }] }]
         })
       }
     );
 
-    const data = await response.json();
+    for await (const chunk of response.body) {
+      const text = chunk.toString();
+      res.write(`data: ${text}\n\n`);
+    }
 
-    const reply =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "⚠️ No response from AI.";
-
-    chatHistory[userId].push({ role: "model", text: reply });
-
-    res.status(200).json({ reply });
+    res.write("event: end\ndata: END\n\n");
+    res.end();
 
   } catch (err) {
-    console.error("AI ERROR:", err);
-    res.status(200).json({
-      reply: "⚠️ AI is temporarily unavailable. Please try again later."
-    });
+    res.write(`event: error\ndata: error\n\n`);
+    res.end();
   }
 });
 

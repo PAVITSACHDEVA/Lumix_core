@@ -1,3 +1,8 @@
+import { streamAIResponse } from "./api.js";
+
+let currentController = null;
+const USER_ID = "default-user"; // later: real user system
+
 const WEATHER_API_KEY = "86af92bb29ea4c278df101649250409";
 
 const chatBox = document.getElementById("chatBox");
@@ -25,6 +30,13 @@ window.onload = () => {
 avatarToggle.onclick = () => {
   document.body.classList.toggle("panel-open");
 };
+function addCursor(el) {
+  const cursor = document.createElement("span");
+  cursor.className = "typing-cursor";
+  cursor.textContent = " ▍";
+  el.appendChild(cursor);
+  return cursor;
+}
 
 /* CHAT UI ONLY */
 function addMessage(text, who="ai") {
@@ -36,12 +48,26 @@ function addMessage(text, who="ai") {
 }
 
 /* SEND (placeholder for backend) */
-sendBtn.onclick = () => {
+sendBtn.onclick = async () => {
   const q = input.value.trim();
   if (!q) return;
+
   addMessage(q, "user");
   input.value = "";
-  addMessage("🧠 Backend will respond here…", "ai");
+
+  // 👇 START typing animation
+  showTyping();
+
+  setTimeout(async () => {
+    try {
+      const r = await handleUserQuery(q);   // backend / AI
+      hideTyping();
+      createMessage(r, "ai", true);
+    } catch (err) {
+      hideTyping();
+      createMessage("❌ Backend error", "ai");
+    }
+  }, 120);
 };
 
 /* ENTER */
