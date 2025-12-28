@@ -48,26 +48,36 @@ function addMessage(text, who="ai") {
 }
 
 /* SEND (placeholder for backend) */
-sendBtn.onclick = async () => {
+sendBtn.onclick = () => {
   const q = input.value.trim();
   if (!q) return;
 
   addMessage(q, "user");
   input.value = "";
 
-  // 👇 START typing animation
-  showTyping();
+  const aiDiv = document.createElement("div");
+  aiDiv.className = "message ai";
+  chatBox.appendChild(aiDiv);
 
-  setTimeout(async () => {
-    try {
-      const r = await handleUserQuery(q);   // backend / AI
-      hideTyping();
-      createMessage(r, "ai", true);
-    } catch (err) {
-      hideTyping();
-      createMessage("❌ Backend error", "ai");
+  const cursor = addCursor(aiDiv);
+
+  currentController = streamAIResponse({
+    prompt: q,
+    userId: USER_ID,
+    onToken(token) {
+      cursor.remove();
+      aiDiv.textContent += token;
+      aiDiv.appendChild(cursor);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    },
+    onEnd() {
+      cursor.remove();
+    },
+    onError() {
+      cursor.remove();
+      aiDiv.textContent += "\n⚠️ Error";
     }
-  }, 120);
+  });
 };
 
 /* ENTER */
@@ -78,3 +88,13 @@ input.addEventListener("keydown", e => {
 /* INIT */
 addMessage("Hello! Lumix Core UI is ready.", "ai");
 /* ================= PROMPT BUILDER ================= */
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && currentController) {
+    currentController.abort();
+    currentController = null;
+  }
+});
+/* ================= IN-MEMORY STORAGE ================= */
+// (moved to server.js)
+/* ================= AI ENDPOINT ================= */
+// (moved to server.js)
