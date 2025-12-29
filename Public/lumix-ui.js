@@ -2,19 +2,26 @@ import { streamAIResponse, getWeather } from "./api.js";
 
 const USER_ID = "default-user";
 let controller = null;
+let activeTool = null;
 
 const chatBox = document.getElementById("chatBox");
 const input = document.getElementById("chatInput");
 const sendBtn = document.getElementById("sendBtn");
-const loading = document.getElementById("loading");
 
-/* ---------- INIT ---------- */
-window.onload = () => (loading.style.display = "none");
+/* ---------- SAFE FORMATTER (NO BLOCK TAGS) ---------- */
+function formatAIText(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+    .replace(/\*(.*?)\*/g, "<i>$1</i>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\n/g, "<br>");
+}
 
+/* ---------- UI HELPERS ---------- */
 function addMessage(text, who) {
   const div = document.createElement("div");
   div.className = `message ${who}`;
-  div.textContent = text;
+  div.innerHTML = text;
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
   return div;
@@ -28,6 +35,7 @@ function addCursor(el) {
   return c;
 }
 
+/* ---------- SEND ---------- */
 sendBtn.onclick = async () => {
   const q = input.value.trim();
   if (!q) return;
@@ -35,31 +43,27 @@ sendBtn.onclick = async () => {
   addMessage(q, "user");
   input.value = "";
 
-  // Weather intent (only if clearly weather)
+  /* WEATHER ROUTING */
+  if (activeTool === "weather") {
+    const w = await getWeather(q);
+    addMessage(
+      formatAIText(
+        `**Weather in ${w.location}**\nTemp: ${w.temp}°C\n${w.condition}\nHumidity: ${w.humidity}%`
+      ),
+      "ai"
+    );
+    activeTool = null;
+    return;
+  }
+
   if (/weather/i.test(q)) {
-    addMessage("Which city or PIN code?", "ai");
+    activeTool = "weather";
+    addMessage("Which city?", "ai");
     return;
   }
 
-  // PIN code → weather
-  if (/^\d{6}$/.test(q)) {
-    try {
-      const w = await getWeather(q);
-      addMessage(
-        `🌤 Weather in ${w.location}\n` +
-        `🌡 ${w.temp}°C\n` +
-        `☁ ${w.condition}\n` +
-        `💧 Humidity: ${w.humidity}%\n` +
-        `💨 Wind: ${w.wind} km/h`,
-        "ai"
-      );
-    } catch {
-      addMessage("⚠️ Could not fetch weather.", "ai");
-    }
-    return;
-  }
-
-  // ✅ DEFAULT AI STREAM (THIS WAS MISSING)
+  /* AI STREAM */
+  let buffer = "";
   const ai = addMessage("", "ai");
   const cursor = addCursor(ai);
 
@@ -67,21 +71,18 @@ sendBtn.onclick = async () => {
     prompt: q,
     userId: USER_ID,
     onToken(token) {
+      buffer += token;
       cursor.remove();
-      ai.textContent += token;
+      ai.innerHTML = formatAIText(buffer);
       ai.appendChild(cursor);
     },
     onEnd() {
       cursor.remove();
-    },
-    onError() {
-      cursor.remove();
-      ai.textContent += "\n⚠️ Error";
     }
   });
 };
 
-/* ---------- CANCEL ---------- */
+/* ESC TO STOP */
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && controller) {
     controller.abort();
@@ -90,3 +91,4 @@ document.addEventListener("keydown", e => {
 });
 
 addMessage("Lumix Core ready 🚀", "ai");
+/* STOP BUTTON */

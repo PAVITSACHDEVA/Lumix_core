@@ -1,12 +1,12 @@
 const API_BASE = "https://lumix-core-5tl0.onrender.com";
 
-export function streamAI({ prompt, onToken, onEnd, onError }) {
+export function streamAIResponse({ prompt, userId, onToken, onEnd, onError }) {
   const controller = new AbortController();
 
   fetch(`${API_BASE}/api/ai/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, userId: "default" }),
+    body: JSON.stringify({ prompt, userId }),
     signal: controller.signal
   })
     .then(res => {
@@ -15,23 +15,27 @@ export function streamAI({ prompt, onToken, onEnd, onError }) {
 
       function read() {
         reader.read().then(({ done, value }) => {
-          if (done) return onEnd();
-          const chunk = decoder.decode(value);
+          if (done) return onEnd?.();
+          const chunk = decoder.decode(value, { stream: true });
+
           chunk.split("\n\n").forEach(line => {
-            if (line.startsWith("data: "))
+            if (line.startsWith("data: ")) {
               onToken(line.replace("data: ", ""));
+            }
           });
           read();
         });
       }
       read();
     })
-    .catch(e => e.name !== "AbortError" && onError(e));
+    .catch(err => err.name !== "AbortError" && onError?.(err));
 
   return controller;
 }
 
 export async function getWeather(city) {
-  const r = await fetch(`${API_BASE}/api/weather?city=${city}`);
+  const r = await fetch(
+    `${API_BASE}/api/weather?city=${encodeURIComponent(city)}`
+  );
   return r.json();
 }
