@@ -1,18 +1,22 @@
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
-app.get("/", (req, res) => {
-  res.status(200).send("Lumix Core backend is alive 🚀");
-});
 
-const app = express();
+const app = express();          // ✅ app FIRST
 const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
 
+/* ---------- ROOT (RENDER HEALTH CHECK) ---------- */
+app.get("/", (req, res) => {
+  res.status(200).send("Lumix Core backend is alive 🚀");
+});
+
+/* ---------- MEMORY ---------- */
 const chatHistory = {};
 
+/* ---------- AI STREAM ---------- */
 app.post("/api/ai/stream", async (req, res) => {
   const { prompt, userId } = req.body;
   if (!prompt || !userId) return res.sendStatus(400);
@@ -56,6 +60,7 @@ app.post("/api/ai/stream", async (req, res) => {
   res.end();
 });
 
+/* ---------- WEATHER ---------- */
 app.get("/api/weather", async (req, res) => {
   const city = req.query.city;
   if (!city) return res.status(400).json({ error: "City required" });
@@ -74,4 +79,7 @@ app.get("/api/weather", async (req, res) => {
   });
 });
 
-app.listen(PORT, () => console.log("✅ Lumix Core backend running"));
+/* ---------- START SERVER ---------- */
+app.listen(PORT, () => {
+  console.log(`🚀 Lumix Core backend running on port ${PORT}`);
+});
