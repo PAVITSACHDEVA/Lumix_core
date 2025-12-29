@@ -28,7 +28,6 @@ function addCursor(el) {
   return c;
 }
 
-/* ---------- SEND ---------- */
 sendBtn.onclick = async () => {
   const q = input.value.trim();
   if (!q) return;
@@ -36,34 +35,48 @@ sendBtn.onclick = async () => {
   addMessage(q, "user");
   input.value = "";
 
-  /* WEATHER DETECT */
+  // Weather intent (only if clearly weather)
   if (/weather/i.test(q)) {
-    addMessage("Which city?", "ai");
+    addMessage("Which city or PIN code?", "ai");
     return;
   }
 
+  // PIN code → weather
   if (/^\d{6}$/.test(q)) {
-    const w = await getWeather(q);
-    addMessage(
-      `🌤 Weather in ${w.location}\n🌡 ${w.temp}°C\n☁ ${w.condition}\n💧 Humidity ${w.humidity}%\n💨 Wind ${w.wind} km/h`,
-      "ai"
-    );
+    try {
+      const w = await getWeather(q);
+      addMessage(
+        `🌤 Weather in ${w.location}\n` +
+        `🌡 ${w.temp}°C\n` +
+        `☁ ${w.condition}\n` +
+        `💧 Humidity: ${w.humidity}%\n` +
+        `💨 Wind: ${w.wind} km/h`,
+        "ai"
+      );
+    } catch {
+      addMessage("⚠️ Could not fetch weather.", "ai");
+    }
     return;
   }
 
+  // ✅ DEFAULT AI STREAM (THIS WAS MISSING)
   const ai = addMessage("", "ai");
   const cursor = addCursor(ai);
 
   controller = streamAIResponse({
     prompt: q,
     userId: USER_ID,
-    onToken(t) {
+    onToken(token) {
       cursor.remove();
-      ai.textContent += t;
+      ai.textContent += token;
       ai.appendChild(cursor);
     },
     onEnd() {
       cursor.remove();
+    },
+    onError() {
+      cursor.remove();
+      ai.textContent += "\n⚠️ Error";
     }
   });
 };
