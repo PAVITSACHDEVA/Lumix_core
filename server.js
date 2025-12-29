@@ -58,27 +58,22 @@ app.post("/api/ai/stream", async (req, res) => {
     }
   );
 
-  let buffer = "";
-
   for await (const chunk of response.body) {
-    buffer += chunk.toString();
-    const lines = buffer.split("\n");
-    buffer = lines.pop();
+  const text = chunk.toString("utf8");
 
-    for (const line of lines) {
-      try {
-        const json = JSON.parse(line);
-        const parts = json.candidates?.[0]?.content?.parts || [];
-        for (const p of parts) {
-          if (p.text) {
-            res.write(`data: ${p.text}\n\n`);
-          }
-        }
-      } catch {
-        /* ignore partial JSON */
-      }
-    }
+  // Extract visible text safely
+  const matches = text.match(/"text"\s*:\s*"([^"]+)"/g);
+  if (!matches) continue;
+
+  for (const m of matches) {
+    const token = m.replace(/"text"\s*:\s*"|"/g, "");
+    res.write(`data: ${token}\n\n`);
   }
+}
+
+res.write("event: end\ndata: END\n\n");
+res.end();
+
 
   res.write("event: end\ndata: END\n\n");
   res.end();
