@@ -1,73 +1,73 @@
-// ui.js
-import { fetchAIResponse } from "./api.js";
+import { streamAI, getWeather } from "./api.js";
 
-const chatBox = document.querySelector(".chat-box");
-const input = document.querySelector('[data-testid="chat-input"]');
-const sendBtn = document.querySelector('[data-testid="send-button"]');
+const chatBox = document.getElementById("chatBox");
+const input = document.getElementById("chatInput");
+const sendBtn = document.getElementById("sendBtn");
+const stopBtn = document.getElementById("stopBtn");
 
-/* ------------------ HELPERS ------------------ */
+let controller = null;
 
-function addMessage(text, sender = "ai") {
+function addMessage(text, who) {
   const div = document.createElement("div");
-  div.className = `message ${sender}`;
-  div.textContent = text;
+  div.className = `message ${who}`;
+  div.innerHTML = text;
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
   return div;
 }
 
-/**
- * Word-by-word streaming typing
- */
-async function streamTyping(element, text, speed = 35) {
-  element.textContent = "";
-  const words = text.split(" ");
+function addCursor(el) {
+  const c = document.createElement("span");
+  c.className = "typing-cursor";
+  c.textContent = " ▍";
+  el.appendChild(c);
+  return c;
+}
 
-  for (let i = 0; i < words.length; i++) {
-    element.textContent += (i === 0 ? "" : " ") + words[i];
-    chatBox.scrollTop = chatBox.scrollHeight;
-    await new Promise(r => setTimeout(r, speed));
+sendBtn.onclick = async () => {
+  const q = input.value.trim();
+  if (!q) return;
+
+  addMessage(q, "user");
+  input.value = "";
+
+  // 🌦 WEATHER ROUTING
+  if (/weather/i.test(q)) {
+    addMessage("Which city?", "ai");
+    return;
   }
-}
 
-/* =================================================
-   MODE 1: UI / CSS TESTING
-   (Keeps current code behavior)
-   ================================================= */
+  if (/^[a-zA-Z\s]+$/.test(q) && lastWasWeather) {
+    const w = await getWeather(q);
+    addMessage(
+      `🌤 <b>${w.location}</b><br>
+       🌡 ${w.temp}°C<br>
+       ☁ ${w.condition}<br>
+       💧 ${w.humidity}%`,
+      "ai"
+    );
+    return;
+  }
 
-export function uiOnlyMode() {
-  sendBtn.onclick = () => {
-    if (!input.value.trim()) return;
-    addMessage(input.value, "user");
-    addMessage("UI test message ✨", "ai");
-    input.value = "";
-  };
-}
+  // 🤖 AI STREAM
+  const ai = addMessage("", "ai");
+  const cursor = addCursor(ai);
 
-/* =================================================
-   MODE 2: AI MODE (replace sendBtn.onclick)
-   ================================================= */
-
-export function aiMode() {
-  sendBtn.onclick = async () => {
-    const prompt = input.value.trim();
-    if (!prompt) return;
-
-    addMessage(prompt, "user");
-    input.value = "";
-
-    const aiBubble = addMessage("...", "ai");
-
-    try {
-      const reply = await fetchAIResponse(prompt);
-      await streamTyping(aiBubble, reply);
-    } catch (err) {
-      aiBubble.textContent = "⚠️ AI error";
-      console.error(err);
+  controller = streamAI({
+    prompt: q,
+    onToken(t) {
+      cursor.remove();
+      ai.innerHTML += t;
+      ai.appendChild(cursor);
+    },
+    onEnd() {
+      cursor.remove();
+    },
+    onError() {
+      cursor.remove();
+      ai.innerHTML += "<br>⚠️ Error";
     }
-  };
-}
-/* ------------------ INITIALIZATION ------------------ */
-// Uncomment one of the following based on desired mode
-// uiOnlyMode();
-aiMode();
+  });
+};
+
+stopBtn.onclick = () => controller?.abort();
