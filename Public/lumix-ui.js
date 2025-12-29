@@ -1,4 +1,4 @@
-import { streamAIResponse } from "./api.js";
+import { streamAIResponse, getWeather } from "./api.js";
 
 const USER_ID = "default-user";
 let controller = null;
@@ -8,9 +8,8 @@ const input = document.getElementById("chatInput");
 const sendBtn = document.getElementById("sendBtn");
 const loading = document.getElementById("loading");
 
-window.onload = () => {
-  loading.style.display = "none"; // ✅ FIXED
-};
+/* ---------- INIT ---------- */
+window.onload = () => (loading.style.display = "none");
 
 function addMessage(text, who) {
   const div = document.createElement("div");
@@ -29,12 +28,28 @@ function addCursor(el) {
   return c;
 }
 
-sendBtn.onclick = () => {
+/* ---------- SEND ---------- */
+sendBtn.onclick = async () => {
   const q = input.value.trim();
   if (!q) return;
 
   addMessage(q, "user");
   input.value = "";
+
+  /* WEATHER DETECT */
+  if (/weather/i.test(q)) {
+    addMessage("Which city?", "ai");
+    return;
+  }
+
+  if (/^\d{6}$/.test(q)) {
+    const w = await getWeather(q);
+    addMessage(
+      `🌤 Weather in ${w.location}\n🌡 ${w.temp}°C\n☁ ${w.condition}\n💧 Humidity ${w.humidity}%\n💨 Wind ${w.wind} km/h`,
+      "ai"
+    );
+    return;
+  }
 
   const ai = addMessage("", "ai");
   const cursor = addCursor(ai);
@@ -53,6 +68,7 @@ sendBtn.onclick = () => {
   });
 };
 
+/* ---------- CANCEL ---------- */
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && controller) {
     controller.abort();
