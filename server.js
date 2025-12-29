@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
+app.get("/", (req, res) => {
+  res.status(200).send("Lumix Core backend is alive 🚀");
+});
 
 const app = express();
 const PORT = process.env.PORT || 10000;
