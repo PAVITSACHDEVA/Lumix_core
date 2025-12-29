@@ -289,3 +289,16 @@ input:checked + .lumix-slider:before {
   max-height: 40vh;
   overflow-y: auto;
 }
+.typing-cursor {
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  0%,50% { opacity: 1 }
+  50%,100% { opacity: 0 }
+}
+/* ===== MOBILE OPTIMIZATIONS ===== */
+@media (max-width: 767px) {
+  #app-container {
+    margin: 1rem auto;
+    padding: 1rem;
+  } }
