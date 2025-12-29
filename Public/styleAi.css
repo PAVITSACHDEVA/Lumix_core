@@ -32,3 +32,51 @@ code {
   font-family: 'Courier New', Courier, monospace;
 }
 a { color:#3b82f6; }   
+/* ---- FIX CHAT WIDTH & CENTERING ---- */
+#app-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ---- CHAT BUBBLES ---- */
+.message {
+  max-width: 85%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.user {
+  margin-left: auto;
+  background: #1e293b;
+}
+
+.ai {
+  margin-right: auto;
+  background: #020617;
+}
+
+/* ---- INPUT FIX ---- */
+.chat-input-area {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+/* ---- STOP BUTTON ALIGN ---- */
+.button-group {
+  display: flex;
+  gap: 0.5rem;
+}
+.stop-button {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.stop-button:hover {
+  background-color: #dc2626;
+} 
