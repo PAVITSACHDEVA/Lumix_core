@@ -4,26 +4,49 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lumix Core AI</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="./styleAi.css" />
 </head>
 <body>
+  <div class="bg-glow"></div>
+  
   <main id="app-container">
     <header>
-      <h1>Lumix Core AI</h1>
+      <div class="logo-section">
+        <div class="logo-icon"><i class="fas fa-microchip"></i></div>
+        <div class="logo-text">
+          <h1>Lumix Core</h1>
+          <span class="status-badge"><span class="pulse"></span> Online</span>
+        </div>
+      </div>
+      <button id="themeToggle" class="icon-btn" title="Toggle Theme"><i class="fas fa-moon"></i></button>
     </header>
 
-    <section id="chatBox" class="chat-box" aria-live="polite"></section>
+    <section id="chatBox" class="chat-box" aria-live="polite">
+      <!-- Welcome Message will be injected here -->
+    </section>
 
-    <div class="chat-input-area">
-      <input type="text" id="chatInput" placeholder="Ask me anything…" autocomplete="off" />
-      <div class="button-group">
-        <button id="sendBtn" type="button">Send</button>
-        <button id="stopBtn" type="button" disabled>Stop</button>
+    <div class="input-wrapper">
+      <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="Ask Lumix anything..." autocomplete="off" />
+        <div class="button-group">
+          <button id="stopBtn" class="action-btn stop" type="button" disabled title="Stop Generation">
+            <i class="fas fa-stop"></i>
+          </button>
+          <button id="sendBtn" class="action-btn send" type="button" title="Send Message">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
       </div>
+      <p class="input-footer">Lumix Core AI may provide inaccurate info. Verify important facts.</p>
     </div>
   </main>
 
   <script type="module" src="./lumix-ui.js"></script>
-
 </body>
 </html>
