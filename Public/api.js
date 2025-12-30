@@ -19,10 +19,13 @@ export function streamAIResponse({ prompt, userId, onToken, onEnd, onError }) {
           const chunk = decoder.decode(value, { stream: true });
 
           chunk.split("\n\n").forEach(line => {
-            if (line.startsWith("data: ")) {
-              onToken(line.replace("data: ", ""));
-            }
-          });
+          if (line.startsWith("data: ")) {
+            const token = line.slice(6);
+            if (token === "END") return;
+            onToken(token);
+          }
+        });
+
           read();
         });
       }

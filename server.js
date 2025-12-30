@@ -28,18 +28,12 @@ const chatHistory = {};
 app.post("/api/ai/stream", async (req, res) => {
   try {
     const { prompt, userId } = req.body;
-    if (!prompt || !userId) {
-      return res.status(400).json({ error: "prompt and userId required" });
-    }
+    if (!prompt || !userId) return res.sendStatus(400);
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders();
-
-    chatHistory[userId] ??= [];
-    chatHistory[userId].push(prompt);
-    if (chatHistory[userId].length > 6) chatHistory[userId].shift();
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:streamGenerateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -47,31 +41,36 @@ app.post("/api/ai/stream", async (req, res) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text:
-                    chatHistory[userId].join("\n") +
-                    "\nUser: " +
-                    prompt
-                }
-              ]
-            }
-          ]
+          contents: [{ role: "user", parts: [{ text: prompt }] }]
         })
       }
     );
 
-    for await (const chunk of response.body) {
-      const text = chunk.toString();
-      const matches = text.match(/"text"\s*:\s*"([^"]+)"/g);
-      if (!matches) continue;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
 
-      for (const m of matches) {
-        const token = m.replace(/"text"\s*:\s*"|"/g, "");
-        res.write(`data: ${token}\n\n`);
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const parts = buffer.split("\n");
+      buffer = parts.pop();
+
+      for (const p of parts) {
+        try {
+          const json = JSON.parse(p);
+          const text =
+            json?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            res.write(`data: ${text}\n\n`);
+          }
+        } catch {
+          /* ignore partial JSON */
+        }
       }
     }
 
@@ -79,7 +78,7 @@ app.post("/api/ai/stream", async (req, res) => {
     res.end();
 
   } catch (err) {
-    console.error("AI STREAM ERROR:", err);
+    console.error(err);
     res.write("event: end\ndata: ERROR\n\n");
     res.end();
   }
