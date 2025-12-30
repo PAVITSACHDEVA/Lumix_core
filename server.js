@@ -10,13 +10,11 @@ app.use(cors());
 app.use(express.json());
 
 /* ================= ROOT ================= */
-/* Just a simple alive check */
 app.get("/", (req, res) => {
   res.status(200).send("Lumix Core backend is alive 🚀");
 });
 
 /* ================= RENDER HEALTH CHECK ================= */
-/* 🔴 THIS FIXES YOUR DEPLOY STUCK ISSUE */
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
@@ -63,8 +61,7 @@ app.post("/api/ai/stream", async (req, res) => {
       for (const p of parts) {
         try {
           const json = JSON.parse(p);
-          const text =
-            json?.candidates?.[0]?.content?.parts?.[0]?.text;
+          const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text) {
             res.write(`data: ${text}\n\n`);
           }
@@ -74,12 +71,12 @@ app.post("/api/ai/stream", async (req, res) => {
       }
     }
 
-    res.write("event: end\ndata: END\n\n");
+    res.write("data: END\n\n");
     res.end();
 
   } catch (err) {
     console.error(err);
-    res.write("event: end\ndata: ERROR\n\n");
+    res.write("data: ERROR\n\n");
     res.end();
   }
 });
