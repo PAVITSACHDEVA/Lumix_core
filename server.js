@@ -44,29 +44,30 @@ app.post("/api/ai/stream", async (req, res) => {
       }
     );
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+    if (!response.ok) {
+        res.write("data: ERROR\n\n");
+        return res.end();
+    }
 
+    // In Node.js node-fetch, response.body is a Node Stream
+    // We use 'for await' to read the stream instead of getReader()
     let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
+    for await (const chunk of response.body) {
+      buffer += chunk.toString();
 
       const parts = buffer.split("\n");
-      buffer = parts.pop();
+      buffer = parts.pop() || "";
 
       for (const p of parts) {
+        if (!p.trim()) continue;
         try {
           const json = JSON.parse(p);
           const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text) {
             res.write(`data: ${text}\n\n`);
           }
-        } catch {
-          /* ignore partial JSON */
+        } catch (e) {
+          // Keep buffer if JSON is incomplete
         }
       }
     }
@@ -75,7 +76,7 @@ app.post("/api/ai/stream", async (req, res) => {
     res.end();
 
   } catch (err) {
-    console.error(err);
+    console.error("Stream Error:", err);
     res.write("data: ERROR\n\n");
     res.end();
   }
