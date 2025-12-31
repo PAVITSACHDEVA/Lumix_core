@@ -141,12 +141,194 @@
             padding: 12px 30px; border-radius: 50px; background: #333; color: #fff; z-index: 9999; opacity: 0; transition: 0.3s;
         }
         .checkbox-group {
+           
             display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem;
         }
+        /* ===== CONTAINER ===== */
+.container {
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 16px;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+  padding: 24px;
+  max-width: 980px;
+  width: 100%;
+  text-align: center;
+}
+
+.content-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* ===== NAVBAR ===== */
+#navbara {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+      margin-left: 10px;
+    margin-right: 10px;
+    margin-bottom: 0px;
+    border-left-width: 0px;
+    border-top-width: 0px;
+}
+
+.gradient-text {
+  padding: 8px 12px;
+  font-size: 1.4rem;
+  transition: transform 0.3s ease;
+  font-weight: 600;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(270deg, #833AB4, #FD1D1D, #FD552C, #d8840f);
+  background-size: 800% 800%;
+  animation: gradientMove 5s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  text-decoration: none;
+}
+
+.gradient-text:hover {
+  transform: scale(1.05);
+}
+
+/* ===== HEADINGS & PARAGRAPHS ===== */
+.gradient-textab {
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.6;
+  display: block;
+  margin-bottom: 12px;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(270deg, #833AB4, #FD1D1D, #FD552C, #c07712);
+  background-size: 800% 800%;
+  animation: gradientMove 5s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradientai-text {
+  position: relative;
+  display: inline-block;
+   padding: 8px 12px;
+  font-size: 1.4rem;
+  background-size: 800% 800%;
+  transition: transform 0.3s ease;
+  font-weight: 600;
+  overflow: visible;
+}
+.gradient-fill {
+  background: linear-gradient(270deg, #833AB4, #FD1D1D, #FD552C, #d8840f);
+  background-size: 800% 800%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 6s ease infinite;
+  display: inline-block;
+}
+.trail-star {
+  position: absolute;
+  top: 50%;
+  left: -20px;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  color: white;
+  opacity: 0;
+  animation: cometTrail 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+/* animations */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes cometTrail {
+  0% {
+    left: -20px;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.5);
+    text-shadow: none;
+  }
+  30% {
+    opacity: 1;
+    text-shadow: 0 0 6px rgba(255,255,255,0.6);
+  }
+  50% {
+    left: 50%;
+    transform: translateY(-50%) scale(1.2);
+    text-shadow: 0 0 12px rgba(255,255,255,0.8);
+  }
+  70% {
+    opacity: 0.6;
+    text-shadow: 0 0 6px rgba(255,255,255,0.4);
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+    text-shadow: none;
+  }
+}
+
+/* ===== KEYFRAMES ===== */
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+  50% { text-shadow: 0 0 20px rgba(255, 255, 255, 1); }
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseSlider {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 255, 255, 0.4); }
+  50% { box-shadow: 0 0 12px rgba(255, 255, 255, 0.8); }
+}
+
+
     </style>
 </head>
 <body>
-
+    <!-- <div class="container"> -->
+      <div id="navbara" class=" container index">
+         <a href="index.html" class="gradient-text">Home</a>
+        <a href="./Public/AI.html" class="gradientai-text" data-sound-id="sound-lumixcore">
+  <span class="gradient-fill">Lumix Core AI</span>
+  <span class="trail-star">★</span>
+</a>
+        <a href="./Public/Genartor.html" class="gradient-text" data-sound-id="sound-generator">Random Image Generator</a>
+        <a href="./Public/Converter.html" class="gradient-text" data-sound-id="sound-convert">Image Converter</a>
+        <!-- <a href="./Public/pdfCompressor.html" class="gradient-text" data-sound-id="sound-pdf">PDF Compressor</a>  -->
+        <a href="./Public/ABOUT.HTML" class="gradient-text" data-sound-id="sound-about"> About the AI </a>
+      </div>
+    <!-- </div> -->
     <div id="toast"></div>
 
     <div class="drawer-toggle-btn" onclick="toggleDrawer()">🕒</div>
@@ -573,6 +755,34 @@
         }
 
         function toggleDrawer() { document.getElementById('drawer').classList.toggle('open'); }
+         document.addEventListener('DOMContentLoaded', () => {
+  const links = document.querySelectorAll('.gradient-text, .gradientai-text');
+
+  links.forEach(link => {
+    link.addEventListener('click', e => {
+      const soundId = link.getAttribute('data-sound-id');
+      const sound = document.getElementById(soundId);
+      if (!sound) return;
+
+      e.preventDefault();
+      sound.currentTime = 0;
+      sound.play();
+
+      sound.addEventListener('ended', function handleEnd() {
+        const targetHref = link.getAttribute('href');
+        window.location.href = targetHref;
+        sound.removeEventListener('ended', handleEnd);
+      });
+    });
+  });
+});
+
     </script>
+     <audio id="sound-home" src="./Public/Assest/Home.mp3" preload="auto"></audio>
+<audio id="sound-lumixcore" src="./Public/Assest/lumix core ai.mp3" preload="auto"></audio>
+<audio id="sound-convert" src="./Public/Assest/Image Converter.mp3" preload="auto"></audio>
+<audio id="sound-about" src="./Public/Assest/About the AI.mp3" preload="auto"></audio>
+<audio id="sound-generator" src="./Public/Assest/Random Image Generator.mp3" preload="auto"></audio>
+
 </body>
 </html>
