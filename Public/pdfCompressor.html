@@ -116,19 +116,28 @@
         }
         .saving-badge { background: #4ade80; color: #000; padding: 2px 8px; border-radius: 50px; font-weight: 800; }
 
-        /* Drawer and Toast */
+        /* History Drawer */
         #drawer {
-            position: fixed; right: -320px; top: 80px; width: 300px; height: calc(100vh - 100px);
-            background: rgba(10, 10, 30, 0.95); backdrop-filter: blur(20px); transition: 0.4s;
-            z-index: 2000; padding: 20px; border-radius: 20px 0 0 20px; border-left: 1px solid rgba(255,255,255,0.1);
+            position: fixed; right: -360px; top: 0; width: 350px; height: 100vh;
+            background: #111; z-index: 2000; transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            padding: 30px; box-shadow: -10px 0 30px rgba(0,0,0,0.5); border-left: 1px solid rgba(255,255,255,0.1);
+            overflow-y: auto;
         }
         #drawer.open { right: 0; }
-        .drawer-toggle {
-            position: absolute; left: -50px; top: 20px; width: 50px; height: 50px;
-            background: rgba(255,255,255,0.1); border-radius: 10px 0 0 10px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        .drawer-toggle-btn {
+            position: fixed; right: 20px; bottom: 20px; width: 60px; height: 60px;
+            background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 2001; transition: 0.3s;
         }
+        .drawer-toggle-btn:hover { transform: scale(1.1); }
+        .history-item {
+            background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 12px;
+            font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.03);
+        }
+        .history-time { opacity: 0.5; font-size: 0.7rem; display: block; margin-bottom: 5px; }
+
         #toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
             padding: 12px 30px; border-radius: 50px; background: #333; color: #fff; z-index: 9999; opacity: 0; transition: 0.3s;
         }
         .checkbox-group {
@@ -140,9 +149,13 @@
 
     <div id="toast"></div>
 
+    <div class="drawer-toggle-btn" onclick="toggleDrawer()">🕒</div>
     <div id="drawer">
-        <div class="drawer-toggle" onclick="toggleDrawer()">🕒</div>
-        <h3 style="margin-top:0">Session History</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <h2 style="margin:0">Recent Work</h2>
+            <span onclick="toggleDrawer()" style="cursor:pointer; font-size:1.5rem">✕</span>
+        </div>
+        <p style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 20px;">Files processed in the last hour. Clears on page reload.</p>
         <div id="historyList"></div>
     </div>
 
@@ -289,7 +302,8 @@
         let state = {
             files: [],
             pagesToDelete: new Set(),
-            sortable: null
+            sortable: null,
+            sessionHistory: [] // Stores processed results for current hour
         };
 
         function showView(v) {
@@ -393,26 +407,16 @@
                     const file = state.files[0];
                     const doc = await PDFLib.PDFDocument.load(await file.arrayBuffer());
                     
-                    // Metadata Stripping
                     if (stripMetadata) {
-                        doc.setTitle('');
-                        doc.setAuthor('');
-                        doc.setSubject('');
-                        doc.setKeywords([]);
-                        doc.setProducer('');
-                        doc.setCreator('');
-                        doc.setCreationDate(new Date());
-                        doc.setModificationDate(new Date());
+                        doc.setTitle(''); doc.setAuthor(''); doc.setSubject(''); doc.setKeywords([]);
+                        doc.setProducer(''); doc.setCreator(''); doc.setCreationDate(new Date()); doc.setModificationDate(new Date());
                     }
 
-                    // Page Deletion Logic
                     if (state.pagesToDelete.size > 0) {
                         const indices = Array.from(state.pagesToDelete).sort((a,b) => b-a);
                         indices.forEach(idx => doc.removePage(idx));
                     }
 
-                    // For real compression, standard browsers/libraries have limits
-                    // In this context, we perform 'Structural' optimization and object clearing
                     const bytes = await doc.save({ 
                         useObjectStreams: optLevel !== 'lossless',
                         addDefaultPage: false 
@@ -504,6 +508,9 @@
             const newKB = (bytes.length / 1024).toFixed(1);
             const saved = Math.round((1 - (bytes.length / oldSize)) * 100);
 
+            // Add to Session History
+            addToHistory(name, url, newKB);
+
             const card = document.createElement('div');
             card.className = 'res-card';
             card.innerHTML = `
@@ -517,6 +524,42 @@
                 <button class="action-btn" style="padding:10px; font-size:0.8rem" onclick="download('${url}', '${name}')">Download</button>
             `;
             container.prepend(card);
+        }
+
+        function addToHistory(name, url, size) {
+            const time = new Date();
+            state.sessionHistory.push({ name, url, size, timestamp: time });
+            
+            // Clean up history older than 1 hour
+            const oneHourAgo = new Date(Date.now() - 3600000);
+            state.sessionHistory = state.sessionHistory.filter(item => item.timestamp > oneHourAgo);
+            
+            updateHistoryUI();
+        }
+
+        function updateHistoryUI() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            
+            if (state.sessionHistory.length === 0) {
+                list.innerHTML = '<p style="opacity:0.4; font-size:0.8rem">No recent activity.</p>';
+                return;
+            }
+
+            [...state.sessionHistory].reverse().forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <span class="history-time">${item.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:10px">
+                            ${item.name}<br/><small style="opacity:0.6">${item.size} KB</small>
+                        </div>
+                        <button class="action-btn" style="width:auto; padding:5px 10px; font-size:0.6rem" onclick="download('${item.url}', '${item.name}')">GET</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
         }
 
         function download(url, name) {
