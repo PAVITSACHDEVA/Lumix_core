@@ -39,6 +39,11 @@
             }, [name]);
             return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
         };
+        // ================================
+// 🔥 SERVER PDF COMPRESSION ENDPOINT
+// ================================
+const SERVER_COMPRESS_ENDPOINT =
+  "https://lumix-core-5tl0.onrender.com/api/compress";
 
         const PDFSqueezePro = () => {
             const [activeTab, setActiveTab] = useState('optimize');
