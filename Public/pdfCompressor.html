@@ -151,34 +151,36 @@ const SERVER_COMPRESS_ENDPOINT =
                             processedResults.push(generateResultObject(`unlocked_${file.name}`, pdfBytes, file.size, 'UNLOCK'));
                         }
                     }
-                    else {
-                        // AGGRESSIVE OPTIMIZE
-                        for (const file of files) {
-                            setStatusText(`Crushing ${file.name}...`);
-                            const bytes = await file.arrayBuffer();
-                            const pdfDoc = await PDFDocument.load(bytes);   
-                            // 🔧 PATCH: detect scanned pdf
-const isScanned = __isScannedPDF(pdfDoc);
+                   else {
+                            // 🔥 SERVER-BASED AGGRESSIVE OPTIMIZE (REAL COMPRESSION)
+                            for (const file of files) {
+                                setStatusText(`Crushing ${file.name} (Server Engine)...`);
 
-                            // 1. Remove unnecessary metadata/tags
-                            pdfDoc.setKeywords([]);
-                            pdfDoc.setSubject('');
-                            
-                            // 2. Save with aggressive object streams and linearization
-                            // This compresses the internal cross-reference tables and object structure
-                                   // 🔧 PATCH START: enhanced optimize save
-                                const pdfBytes = await pdfDoc.save({
-                                useObjectStreams: true,
-                                compress: true,
-                                addDefaultPage: false,
-                                updateFieldAppearances: false,
-                                objectsPerTick: 50
+                                const formData = new FormData();
+                                formData.append("file", file);
+
+                                const response = await fetch(SERVER_COMPRESS_ENDPOINT, {
+                                method: "POST",
+                                body: formData
                                 });
-                                // 🔧 PATCH END
 
-                            processedResults.push(generateResultObject(`${prefix}${file.name}`, pdfBytes, file.size, 'OPTIMIZE'));
-                        }
-                    }
+                                if (!response.ok) {
+                                throw new Error("Server compression failed");
+                                }
+
+                                const pdfBuffer = await response.arrayBuffer();
+
+                                processedResults.push(
+                                generateResultObject(
+                                    `${prefix}${file.name}`,
+                                    new Uint8Array(pdfBuffer),
+                                    file.size,
+                                    'OPTIMIZE'
+                                )
+                                );
+                            }
+                            }
+
 
                     setProgress(100);
                     setResults(processedResults);
