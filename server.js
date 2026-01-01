@@ -107,6 +107,46 @@ app.get("/api/weather", async (req, res) => {
     res.status(500).json({ error: "Weather fetch failed" });
   }
 });
+// ================================
+// PDF COMPRESSION (GHOSTSCRIPT)
+// ================================
+import multer from "multer";
+import { exec } from "child_process";
+import fs from "fs";
+import path from "path";
+
+const upload = multer({ dest: "tmp/" });
+
+app.post("/api/compress", upload.single("file"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send("No file uploaded");
+  }
+
+  const inputPath = req.file.path;
+  const outputPath = `${inputPath}-compressed.pdf`;
+
+  const gsCommand = `
+    gs -sDEVICE=pdfwrite \
+       -dCompatibilityLevel=1.4 \
+       -dPDFSETTINGS=/ebook \
+       -dNOPAUSE -dQUIET -dBATCH \
+       -sOutputFile=${outputPath} \
+       ${inputPath}
+  `;
+
+  exec(gsCommand, (error) => {
+    if (error) {
+      console.error("Ghostscript error:", error);
+      return res.status(500).send("Compression failed");
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.sendFile(path.resolve(outputPath), () => {
+      fs.unlinkSync(inputPath);
+      fs.unlinkSync(outputPath);
+    });
+  });
+});
 
 /* ================= START SERVER ================= */
 app.listen(PORT, () => {

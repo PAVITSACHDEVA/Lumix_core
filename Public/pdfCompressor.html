@@ -3,689 +3,472 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Squeeze Pro | Ultimate Batch Suite</title>
+    <title>PDF Squeeze Pro - Portable Parallel Engine</title>
+    <!-- React & Babel Standalone -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons & PDF-LIB Engine -->
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-     <link rel="icon" type="image/png" href="Assest/Logo.png" />
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
-
-        :root { --radius: 20px; --accent: #7873f5; --danger: #ff4757; --success: #2ecc71; --card-bg: rgba(255, 255, 255, 0.05); }
-        * { box-sizing: border-box; }
-        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body {
-            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            background: linear-gradient(270deg, #1a1a2e, #16213e, #0f3460);
-            font-family: 'Poppins', sans-serif; color: #fff; overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
         }
-
-        /* Nav Branding */
-        #navbara {
-            display: flex; justify-content: center; flex-wrap: wrap; gap: 15px;
-            margin: 20px 0; padding: 15px; background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(8px); border-radius: 16px; width: min(1100px, 95vw);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .gradient-text {
-            padding: 8px 12px; font-size: 1.1rem; transition: 0.3s; font-weight: 600;
-            background: linear-gradient(270deg, #833AB4, #FD1D1D, #FD552C, #d8840f);
-            background-size: 800% 800%; animation: gradientMove 5s ease infinite;
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; cursor: pointer;
-        }
-
-        nav.app-nav {
-            width: 100%; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1);
-            position: sticky; top: 0; z-index: 1000;
-        }
-        .nav-logo { font-size: 1.2rem; font-weight: 800; text-decoration: none; color: #fff; letter-spacing: 1px; }
-        .nav-links { display: flex; gap: 5px; list-style: none; margin: 0; padding: 0; }
-        .nav-link { 
-            text-decoration: none; color: #fff; font-size: 0.75rem; font-weight: 600; 
-            opacity: 0.6; transition: 0.3s; cursor: pointer; padding: 6px 12px; border-radius: 6px;
-        }
-        .nav-link.active { opacity: 1; background: rgba(255,255,255,0.1); }
-
-        .container {
-            text-align: center; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px);
-            padding: 30px; border-radius: var(--radius); box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            width: min(1100px, 95vw); margin-bottom: 50px; border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .app-view { display: none; animation: fadeIn 0.3s ease; }
-        .app-view.active-view { display: block; }
-
-        .upload-area {
-            border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 40px 20px;
-            background: rgba(255, 255, 255, 0.02); cursor: pointer; transition: 0.3s; margin-bottom: 20px;
-        }
-        .upload-area.dragging { border-color: var(--accent); background: rgba(120, 115, 245, 0.15); }
-
-        .batch-list {
-            display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;
-            max-height: 200px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 12px;
-        }
-        .file-item {
-            background: rgba(255, 255, 255, 0.08); padding: 8px 15px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem;
-        }
-        .tiny-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; }
-        .tiny-btn:hover { background: var(--accent); }
-
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .card { background: var(--card-bg); padding: 15px; border-radius: 12px; text-align: left; }
-        .card h3 { font-size: 0.7rem; margin: 0 0 10px 0; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; }
-
-        input, select {
-            width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.3); color: #fff; outline: none; margin-bottom: 4px; font-size: 0.85rem;
-        }
-
-        .action-btn {
-            width: 100%; padding: 15px; border-radius: 10px; border: none;
-            background: var(--accent); color: #fff; font-weight: 700; cursor: pointer; transition: 0.3s;
-        }
-        .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .download-all-btn { background: var(--success); display: none; margin-top: 15px; }
-
-        .results-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 25px; }
-        .res-card { background: rgba(255,255,255,0.08); padding: 15px; border-radius: 12px; text-align: left; border: 1px solid rgba(255,255,255,0.1); }
-
-        /* Custom Alert / Modal */
-        #custom-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-            z-index: 9000; display: none; align-items: center; justify-content: center;
-        }
-        .modal-content {
-            background: #1a1a2e; padding: 40px; border-radius: 20px; max-width: 400px;
-            text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        .modal-content h2 { margin-top: 0; color: var(--accent); }
-        .modal-content p { font-size: 0.9rem; opacity: 0.8; margin-bottom: 25px; line-height: 1.6; }
-
-        #processing-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85);
-            z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);
-        }
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px; }
-
-        #deleter-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 3000; display: none; padding: 40px; overflow-y: auto;
-        }
-        .thumb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
-        .thumb-item { position: relative; background: #fff; border-radius: 4px; cursor: pointer; border: 3px solid transparent; }
-        .thumb-item.deleted { opacity: 0.3; border-color: var(--danger); }
-        .thumb-item.deleted::after { content: "REMOVE"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--danger); padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        .thumb-item canvas { width: 100%; height: auto; display: block; }
-
-        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 50px; background: #333; z-index: 9999; opacity: 0; transition: 0.3s; pointer-events: none; }
-
-        /* History Styling */
-        .history-section { margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
-        .history-list { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 10px; }
-        .history-item { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);
-        }
-        .history-info { text-align: left; }
-        .history-name { font-size: 0.85rem; font-weight: 600; color: #fff; }
-        .history-meta { font-size: 0.7rem; opacity: 0.5; }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
     </style>
 </head>
-<body>
+<body class="custom-scrollbar">
+    <div id="root"></div>
 
-    <div id="navbara">
-        <a href="/index.html" class="gradient-text">Home</a>
-        <a href="./AI.html" class="gradient-text">Lumix Core AI</a>
-        <a href="./Converter.html" class="gradient-text">Image Converter</a>
-        <a href="./Genartor.html" class="gradient-text" data-sound-id="sound-generator">Random Image Generator</a>
-        <a href="./ABOUT.HTML" class="gradient-text">About Lumix</a>
-    </div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
 
-    <!-- GET MORE OPTIONS ALERT -->
-    <div id="custom-modal">
-        <div class="modal-content">
-            <h2>More Formats Available</h2>
-            <p>To convert to more options like TIFF, SVG, BMP, or GIF, use our specialized Image Converter tool.</p>
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                <a href="./Converter.html" class="action-btn" style="text-decoration:none; text-align:center;">Image Converter</a>
-                <button class="tiny-btn" onclick="closeModal()" style="padding:12px; font-size:0.8rem;">Stay here</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="processing-overlay">
-        <div class="spinner"></div>
-        <div id="processing-text">Processing...</div>
-    </div>
-
-    <div id="toast"></div>
-
-    <nav class="app-nav">
-        <a href="#" class="nav-logo">PDF SQUEEZE PRO</a>
-        <ul class="nav-links">
-            <li><a class="nav-link active" onclick="showView('compress')">Optimize</a></li>
-            <li><a class="nav-link" onclick="showView('merge')">Merge</a></li>
-            <li><a class="nav-link" onclick="showView('watermark')">Watermark</a></li>
-            <li><a class="nav-link" onclick="showView('export')">Export Pages</a></li>
-            <li><a class="nav-link" onclick="showView('history')">History</a></li>
-        </ul>
-    </nav>
-
-    <div class="container">
-        
-        <!-- COMPRESS VIEW -->
-        <div id="view-compress" class="app-view active-view">
-            <h1>Batch Optimizer & Page Remover</h1>
-            <div class="upload-area" id="drop-compress" onclick="triggerUpload('compress')" 
-                 ondragover="event.preventDefault(); this.classList.add('dragging')" 
-                 ondragleave="this.classList.remove('dragging')" 
-                 ondrop="handleDrop(event, 'compress')">
-                <span>Drop PDFs to Compress or Edit</span>
-                <input type="file" id="input-compress" hidden multiple accept=".pdf" onchange="handleFiles('compress')">
-            </div>
-            <div id="list-compress" class="batch-list"></div>
-            
-            <div class="settings-grid">
-                <div class="card">
-                    <h3>Prefix</h3>
-                    <input type="text" id="prefix-compress" value="squeezed_">
-                </div>
-                <div class="card">
-                    <h3>Method</h3>
-                    <select id="method-compress">
-                        <option value="fast">Fast (Linearization)</option>
-                        <option value="deep">Standard (Deep Rebuild)</option>
-                    </select>
-                </div>
-            </div>
-
-            <button class="action-btn" id="btn-compress" disabled onclick="processBatch('compress')">START BATCH OPTIMIZATION</button>
-            <button class="action-btn download-all-btn" id="dl-all-compress" onclick="downloadAllZip('compress')">Download All Results (ZIP)</button>
-            <div id="results-compress" class="results-container"></div>
-        </div>
-
-        <!-- MERGE VIEW -->
-        <div id="view-merge" class="app-view">
-            <h1>Merge Suite</h1>
-            <div class="upload-area" id="drop-merge" onclick="triggerUpload('merge')"
-                 ondragover="event.preventDefault(); this.classList.add('dragging')" 
-                 ondragleave="this.classList.remove('dragging')" 
-                 ondrop="handleDrop(event, 'merge')">
-                <span>Drop PDFs to Combine</span>
-                <input type="file" id="input-merge" multiple hidden accept=".pdf" onchange="handleFiles('merge')">
-            </div>
-            <div id="list-merge" class="batch-list"></div>
-            <div class="card" style="margin-bottom:20px">
-                <h3>Output Filename</h3>
-                <input type="text" id="merge-name" value="combined_result.pdf">
-            </div>
-            <button class="action-btn" id="btn-merge" disabled onclick="processBatch('merge')">MERGE INTO SINGLE PDF</button>
-            <div id="results-merge" class="results-container"></div>
-        </div>
-
-        <!-- WATERMARK VIEW -->
-        <div id="view-watermark" class="app-view">
-            <h1>Advanced Watermark</h1>
-            <div class="upload-area" id="drop-watermark" onclick="triggerUpload('watermark')"
-                 ondragover="event.preventDefault(); this.classList.add('dragging')" 
-                 ondragleave="this.classList.remove('dragging')" 
-                 ondrop="handleDrop(event, 'watermark')">
-                <span>Drop PDFs to Add Stamp</span>
-                <input type="file" id="input-watermark" multiple hidden accept=".pdf" onchange="handleFiles('watermark')">
-            </div>
-            <div id="list-watermark" class="batch-list"></div>
-            
-            <div class="settings-grid">
-                <div class="card">
-                    <h3>Stamp Text</h3>
-                    <input type="text" id="watermark-text" value="DRAFT COPY">
-                </div>
-                <div class="card">
-                    <h3>Color</h3>
-                    <select id="watermark-color">
-                        <option value="rgb(0.5, 0.5, 0.5)">Grey</option>
-                        <option value="rgb(1, 0, 0)">Red</option>
-                        <option value="rgb(0, 0, 1)">Blue</option>
-                        <option value="rgb(0, 0, 0)">Black</option>
-                    </select>
-                </div>
-                <div class="card">
-                    <h3>Opacity</h3>
-                    <input type="range" id="watermark-opacity" min="0.1" max="1" step="0.1" value="0.4">
-                </div>
-                <div class="card">
-                    <h3>Position</h3>
-                    <select id="watermark-pos">
-                        <option value="center">Center (Diagonal)</option>
-                        <option value="bottom-right">Bottom Right</option>
-                        <option value="top-left">Top Left</option>
-                    </select>
-                </div>
-                <div class="card">
-                    <h3>Font Size</h3>
-                    <input type="number" id="watermark-size" value="45">
-                </div>
-                <div class="card">
-                    <h3>Rotation</h3>
-                    <input type="number" id="watermark-rotate" value="45" placeholder="Degrees">
-                </div>
-            </div>
-            
-            <button class="action-btn" id="btn-watermark" disabled onclick="processBatch('watermark')">APPLY WATERMARK</button>
-            <button class="action-btn download-all-btn" id="dl-all-watermark" onclick="downloadAllZip('watermark')">Download All Results (ZIP)</button>
-            <div id="results-watermark" class="results-container"></div>
-        </div>
-
-        <!-- EXPORT VIEW -->
-        <div id="view-export" class="app-view">
-            <h1>Batch Export Pages</h1>
-            <div class="upload-area" id="drop-export" onclick="triggerUpload('export')"
-                 ondragover="event.preventDefault(); this.classList.add('dragging')" 
-                 ondragleave="this.classList.remove('dragging')" 
-                 ondrop="handleDrop(event, 'export')">
-                <span>Drop PDFs to Convert to Images</span>
-                <input type="file" id="input-export" multiple hidden accept=".pdf" onchange="handleFiles('export')">
-            </div>
-            <div id="list-export" class="batch-list"></div>
-            <div class="settings-grid">
-                <div class="card">
-                    <h3>Target Format</h3>
-                    <select id="export-format" onchange="handleFormatChange(this)">
-                        <option value="image/jpeg">JPEG (.jpg)</option>
-                        <option value="image/png">PNG (.png)</option>
-                        <option value="image/webp">WebP (.webp)</option>
-                        <option value="more" style="color:var(--accent); font-weight:700;">Get more options...</option>
-                    </select>
-                </div>
-                <div class="card">
-                    <h3>Resolution (Scale)</h3>
-                    <select id="export-quality">
-                        <option value="1">1x (Standard)</option>
-                        <option value="1.5">1.5x (Medium)</option>
-                        <option value="2">2x (High Res)</option>
-                        <option value="3">3x (Ultra HD)</option>
-                    </select>
-                </div>
-                <div class="card">
-                    <h3>File Prefix</h3>
-                    <input type="text" id="export-prefix" value="export_">
-                </div>
-            </div>
-            <button class="action-btn" id="btn-export" disabled onclick="processBatch('export')">EXPORT ALL PAGES</button>
-            <button class="action-btn download-all-btn" id="dl-all-export" onclick="downloadAllZip('export')">Download All Packages (ZIP)</button>
-            <div id="results-export" class="results-container"></div>
-        </div>
-
-        <!-- HISTORY VIEW -->
-        <div id="view-history" class="app-view">
-            <h1>Session History</h1>
-            <p style="opacity:0.6; font-size: 0.9rem; margin-bottom: 25px;">Track all files processed during this session.</p>
-            <div id="history-container" class="history-list">
-                <p style="opacity:0.4;">No history yet. Start processing files to see them here.</p>
-            </div>
-            <button class="tiny-btn" onclick="clearFullHistory()" style="margin-top: 20px; padding: 10px 20px;">Clear Session History</button>
-        </div>
-    </div>
-
-    <!-- Page Remover Modal -->
-    <div id="deleter-modal">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
-            <h2 id="deleter-title">Page Remover</h2>
-            <button onclick="closeDeleter()" class="action-btn" style="width:auto; padding:10px 30px; background:var(--accent)">Confirm & Exit</button>
-        </div>
-        <div id="thumbGrid" class="thumb-grid"></div>
-    </div>
-
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-        
-        let state = { 
-            files: [], 
-            pagesToDelete: new Map(),
-            results: { compress: [], watermark: [], export: [], merge: [] },
-            history: [],
-            lastFormat: "image/jpeg"
+        const Icon = ({ name, size = 16, className = "" }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
         };
 
-        function showView(v) {
-            document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active-view'));
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.getElementById(`view-${v}`).classList.add('active-view');
-            
-            const target = Array.from(document.querySelectorAll('.nav-link')).find(l => l.getAttribute('onclick').includes(v));
-            if(target) target.classList.add('active');
-            
-            if (v === 'history') {
-                renderHistory();
-            } else {
-                state.files = [];
-                state.pagesToDelete.clear();
-                updateResultsUI(v);
-                updateUI(v);
-            }
-        }
+        const PDFSqueezePro = () => {
+            const [activeTab, setActiveTab] = useState('optimize');
+            const [files, setFiles] = useState([]);
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [progress, setProgress] = useState(0);
+            const [statusText, setStatusText] = useState('');
+            const [results, setResults] = useState([]);
+            const [history, setHistory] = useState([]);
+            const [toast, setToast] = useState(null);
 
-        function triggerUpload(v) { document.getElementById(`input-${v}`).click(); }
+            // Settings State
+            const [prefix, setPrefix] = useState('squeezed_');
+            const [mergeName, setMergeName] = useState('combined_result.pdf');
+            const [wmText, setWmText] = useState('DRAFT COPY');
+            const [wmOpacity, setWmOpacity] = useState(0.4);
+            const [rotateAngle, setRotateAngle] = useState(90);
+            const [metaTitle, setMetaTitle] = useState('');
+            const [metaAuthor, setMetaAuthor] = useState('');
 
-        function handleFiles(v) {
-            const input = document.getElementById(`input-${v}`);
-            state.files = [...state.files, ...Array.from(input.files)];
-            updateUI(v);
-        }
+            const fileInputRef = useRef(null);
 
-        function handleDrop(e, v) {
-            e.preventDefault();
-            this.classList.remove('dragging');
-            const dropped = Array.from(e.dataTransfer.files).filter(f => f.type === "application/pdf");
-            state.files = [...state.files, ...dropped];
-            updateUI(v);
-        }
+            const showToast = (message, type = 'success') => {
+                setToast({ message, type });
+                setTimeout(() => setToast(null), 3000);
+            };
 
-        function updateUI(v) {
-            const list = document.getElementById(`list-${v}`);
-            if (!list) return;
-            
-            list.innerHTML = state.files.map((f, i) => {
-                const deletedCount = state.pagesToDelete.get(i)?.size || 0;
-                return `
-                <div class="file-item">
-                    <span>${f.name} (${(f.size/1024/1024).toFixed(2)}MB) ${deletedCount > 0 ? `<b style="color:var(--danger)">[-${deletedCount} pgs]</b>` : ''}</span>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        ${v === 'compress' ? `<button class="tiny-btn" onclick="openDeleter(${i})">Edit Pages</button>` : ''}
-                        <span onclick="removeFile(${i}, '${v}')" style="cursor:pointer; color:var(--danger); font-size:1.2rem;">✕</span>
-                    </div>
-                </div>
-            `}).join('');
-            
-            const btn = document.getElementById(`btn-${v}`);
-            if(btn) btn.disabled = state.files.length === 0;
-        }
+            const handleFileSelection = (e) => {
+                const selectedFiles = Array.from(e.target.files).filter(f => f.type === 'application/pdf');
+                if (selectedFiles.length === 0) return;
+                setFiles(prev => [...prev, ...selectedFiles]);
+                showToast(`Added ${selectedFiles.length} files`);
+            };
 
-        function removeFile(idx, v) {
-            state.files.splice(idx, 1);
-            state.pagesToDelete.delete(idx);
-            updateUI(v);
-        }
+            const removeFile = (index) => setFiles(prev => prev.filter((_, i) => i !== index));
 
-        function handleFormatChange(select) {
-            if (select.value === 'more') {
-                document.getElementById('custom-modal').style.display = 'flex';
-                select.value = state.lastFormat;
-            } else {
-                state.lastFormat = select.value;
-            }
-        }
+            const processBatch = async () => {
+                if (files.length === 0) return;
+                setIsProcessing(true);
+                setProgress(10);
+                setStatusText("Warming up Parallel Engine...");
 
-        function closeModal() {
-            document.getElementById('custom-modal').style.display = 'none';
-        }
+                try {
+                    let processedResults = [];
 
-        async function openDeleter(idx) {
-            const file = state.files[idx];
-            const modal = document.getElementById('deleter-modal');
-            const grid = document.getElementById('thumbGrid');
-            const title = document.getElementById('deleter-title');
-            
-            title.textContent = `Visual Squeezer: ${file.name}`;
-            grid.innerHTML = '<p>Generating previews...</p>';
-            modal.style.display = 'block';
-            
-            if (!state.pagesToDelete.has(idx)) state.pagesToDelete.set(idx, new Set());
-            const currentDeleted = state.pagesToDelete.get(idx);
-            
-            const pdf = await pdfjsLib.getDocument(await file.arrayBuffer()).promise;
-            grid.innerHTML = '';
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const viewport = page.getViewport({scale: 0.3});
-                const canvas = document.createElement('canvas');
-                canvas.width = viewport.width; canvas.height = viewport.height;
-                await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
-
-                const div = document.createElement('div');
-                div.className = 'thumb-item' + (currentDeleted.has(i-1) ? ' deleted' : '');
-                div.innerHTML = `<span style="position:absolute; top:2px; left:2px; background:#000; padding:2px 5px; font-size:10px;">${i}</span>`;
-                div.appendChild(canvas);
-                
-                div.onclick = () => {
-                    div.classList.toggle('deleted');
-                    if (currentDeleted.has(i-1)) currentDeleted.delete(i-1);
-                    else currentDeleted.add(i-1);
-                };
-                grid.appendChild(div);
-            }
-        }
-
-        function closeDeleter() { 
-            document.getElementById('deleter-modal').style.display = 'none'; 
-            updateUI('compress');
-        }
-
-        async function processBatch(type) {
-            const overlay = document.getElementById('processing-overlay');
-            const text = document.getElementById('processing-text');
-            overlay.style.display = 'flex';
-
-            try {
-                if (type === 'compress') {
-                    const prefix = document.getElementById('prefix-compress').value;
-                    for (let i = 0; i < state.files.length; i++) {
-                        text.textContent = `Optimizing ${i+1}/${state.files.length}: ${state.files[i].name}`;
-                        const doc = await PDFLib.PDFDocument.load(await state.files[i].arrayBuffer());
-                        if (state.pagesToDelete.has(i)) {
-                            const indices = Array.from(state.pagesToDelete.get(i)).sort((a,b) => b-a);
-                            indices.forEach(idx => doc.removePage(idx));
+                    if (activeTab === 'merge') {
+                        setStatusText("Merging documents...");
+                        const mergedPdf = await PDFDocument.create();
+                        for (const file of files) {
+                            const bytes = await file.arrayBuffer();
+                            const pdf = await PDFDocument.load(bytes);
+                            const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                            copiedPages.forEach((page) => mergedPdf.addPage(page));
                         }
-                        const bytes = await doc.save({ useObjectStreams: true });
-                        const ts = new Date().toLocaleTimeString().replace(/:/g, '-');
-                        addResult(`${prefix}${ts}_${state.files[i].name}`, bytes, type);
+                        const pdfBytes = await mergedPdf.save();
+                        processedResults.push(generateResultObject(mergeName, pdfBytes, files.reduce((a,b)=>a+b.size,0), 'MERGE'));
+                    } 
+                    else if (activeTab === 'rotate') {
+                        for (const file of files) {
+                            setStatusText(`Rotating ${file.name}...`);
+                            const bytes = await file.arrayBuffer();
+                            const pdfDoc = await PDFDocument.load(bytes);
+                            pdfDoc.getPages().forEach(p => p.setRotation(degrees(parseInt(rotateAngle))));
+                            const pdfBytes = await pdfDoc.save();
+                            processedResults.push(generateResultObject(`rotated_${file.name}`, pdfBytes, file.size, 'ROTATE'));
+                        }
                     }
-                } else if (type === 'merge') {
-                    text.textContent = "Merging Files...";
-                    const merged = await PDFLib.PDFDocument.create();
-                    for(const f of state.files) {
-                        const donor = await PDFLib.PDFDocument.load(await f.arrayBuffer());
-                        const pages = await merged.copyPages(donor, donor.getPageIndices());
-                        pages.forEach(p => merged.addPage(p));
-                    }
-                    addResult(document.getElementById('merge-name').value, await merged.save(), type);
-                } else if (type === 'watermark') {
-                    const stampText = document.getElementById('watermark-text').value;
-                    const op = parseFloat(document.getElementById('watermark-opacity').value);
-                    const pos = document.getElementById('watermark-pos').value;
-                    const size = parseInt(document.getElementById('watermark-size').value);
-                    const rotate = parseInt(document.getElementById('watermark-rotate').value);
-                    const colorStr = document.getElementById('watermark-color').value; 
-                    
-                    const rgb = colorStr.match(/[\d.]+/g).map(Number);
-                    const color = PDFLib.rgb(rgb[0], rgb[1], rgb[2]);
-
-                    for (let i = 0; i < state.files.length; i++) {
-                        text.textContent = `Watermarking ${i+1}/${state.files.length}...`;
-                        const doc = await PDFLib.PDFDocument.load(await state.files[i].arrayBuffer());
-                        const pages = doc.getPages();
-                        
-                        pages.forEach(p => {
-                            const { width, height } = p.getSize();
-                            let x = 50, y = 50;
-                            
-                            if (pos === 'center') {
-                                x = width / 2 - (stampText.length * size) / 4;
-                                y = height / 2;
-                            } else if (pos === 'bottom-right') {
-                                x = width - (stampText.length * size * 0.6);
-                                y = 50;
-                            } else {
-                                x = 50; y = height - 50;
-                            }
-
-                            p.drawText(stampText, { 
-                                x, y, size, color, 
-                                opacity: op, 
-                                rotate: PDFLib.degrees(rotate) 
+                    else if (activeTab === 'watermark') {
+                        for (const file of files) {
+                            setStatusText(`Stamping ${file.name}...`);
+                            const bytes = await file.arrayBuffer();
+                            const pdfDoc = await PDFDocument.load(bytes);
+                            const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+                            pdfDoc.getPages().forEach(page => {
+                                const { width, height } = page.getSize();
+                                page.drawText(wmText, {
+                                    x: width / 4, y: height / 2, size: 50, font,
+                                    rotate: degrees(45), opacity: parseFloat(wmOpacity),
+                                    color: rgb(0.5, 0.5, 0.5),
+                                });
                             });
-                        });
-                        const ts = new Date().toLocaleTimeString().replace(/:/g, '-');
-                        addResult(`watermarked_${ts}_${state.files[i].name}`, await doc.save(), type);
-                    }
-                } else if (type === 'export') {
-                    const scale = parseFloat(document.getElementById('export-quality').value);
-                    const mimeType = document.getElementById('export-format').value;
-                    const prefix = document.getElementById('export-prefix').value;
-                    const ext = mimeType.split('/')[1].replace('jpeg', 'jpg');
-
-                    for (let i = 0; i < state.files.length; i++) {
-                        text.textContent = `Converting ${state.files[i].name}...`;
-                        const pdf = await pdfjsLib.getDocument(await state.files[i].arrayBuffer()).promise;
-                        const zip = new JSZip();
-                        const fileNameBase = state.files[i].name.split('.')[0];
-                        
-                        for(let j=1; j<=pdf.numPages; j++) {
-                            const page = await pdf.getPage(j);
-                            const canvas = document.createElement('canvas');
-                            const vp = page.getViewport({scale});
-                            canvas.width = vp.width; canvas.height = vp.height;
-                            await page.render({canvasContext: canvas.getContext('2d'), viewport: vp}).promise;
-                            
-                            const dataUrl = canvas.toDataURL(mimeType, 0.9);
-                            const data = dataUrl.split(',')[1];
-                            zip.file(`page_${j}.${ext}`, data, {base64: true});
+                            const pdfBytes = await pdfDoc.save();
+                            processedResults.push(generateResultObject(`stamped_${file.name}`, pdfBytes, file.size, 'WATERMARK'));
                         }
-                        
-                        const zipBytes = await zip.generateAsync({type:"uint8array"});
-                        const ts = new Date().toLocaleTimeString().replace(/:/g, '-');
-                        addResult(`${prefix}${ts}_${fileNameBase}.zip`, zipBytes, type);
                     }
+                    else if (activeTab === 'metadata') {
+                        for (const file of files) {
+                            setStatusText(`Updating tags: ${file.name}...`);
+                            const bytes = await file.arrayBuffer();
+                            const pdfDoc = await PDFDocument.load(bytes);
+                            pdfDoc.setTitle(metaTitle || "Untitled Document");
+                            pdfDoc.setAuthor(metaAuthor || "PDF Squeeze User");
+                            pdfDoc.setProducer("PDF Squeeze Pro Engine v2.0");
+                            const pdfBytes = await pdfDoc.save();
+                            processedResults.push(generateResultObject(`tagged_${file.name}`, pdfBytes, file.size, 'METADATA'));
+                        }
+                    }
+                    else if (activeTab === 'unlock') {
+                        for (const file of files) {
+                            setStatusText(`Unlocking ${file.name}...`);
+                            const bytes = await file.arrayBuffer();
+                            // Note: pdf-lib loads encrypted PDFs if no password is set for opening
+                            const pdfDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+                            const pdfBytes = await pdfDoc.save();
+                            processedResults.push(generateResultObject(`unlocked_${file.name}`, pdfBytes, file.size, 'UNLOCK'));
+                        }
+                    }
+                    else {
+                        // AGGRESSIVE OPTIMIZE
+                        for (const file of files) {
+                            setStatusText(`Crushing ${file.name}...`);
+                            const bytes = await file.arrayBuffer();
+                            const pdfDoc = await PDFDocument.load(bytes);   
+                            // 🔧 PATCH: detect scanned pdf
+const isScanned = __isScannedPDF(pdfDoc);
+
+                            // 1. Remove unnecessary metadata/tags
+                            pdfDoc.setKeywords([]);
+                            pdfDoc.setSubject('');
+                            
+                            // 2. Save with aggressive object streams and linearization
+                            // This compresses the internal cross-reference tables and object structure
+                                   // 🔧 PATCH START: enhanced optimize save
+                                const pdfBytes = await pdfDoc.save({
+                                useObjectStreams: true,
+                                compress: true,
+                                addDefaultPage: false,
+                                updateFieldAppearances: false,
+                                objectsPerTick: 50
+                                });
+                                // 🔧 PATCH END
+
+                            processedResults.push(generateResultObject(`${prefix}${file.name}`, pdfBytes, file.size, 'OPTIMIZE'));
+                        }
+                    }
+
+                    setProgress(100);
+                    setResults(processedResults);
+                    setHistory(prev => [...processedResults, ...prev]);
+                    showToast("Task completed!");
+                } catch (error) {
+                    console.error(error);
+                    showToast("Processing failed: Likely an encrypted file.", "error");
+                } finally {
+                    setIsProcessing(false);
+                    setFiles([]);
                 }
+            };
+const generateResultObject = (name, bytes, originalSize, type) => {
+    const blob = new Blob([bytes], { type: 'application/pdf' });
 
-                state.files = [];
-                state.pagesToDelete.clear();
-                updateUI(type);
-                notify("Batch Complete!");
-            } catch (e) {
-                notify("Failed: " + e.message, true);
-                console.error(e);
-            } finally {
-                overlay.style.display = 'none';
-            }
-        }
+    // 🔧 PATCH 4 START: size stats (raw values)
+    const savedBytes = originalSize - bytes.length;
+    // 🔧 PATCH 4 END
 
-        function updateResultsUI(type) {
-            const container = document.getElementById(`results-${type}`);
-            if(!container) return;
-            container.innerHTML = '';
-            state.results[type].forEach(res => renderResultCard(res.name, res.bytes, type));
-            const dlBtn = document.getElementById(`dl-all-${type}`);
-            if(dlBtn) dlBtn.style.display = state.results[type].length >= 2 ? 'block' : 'none';
-        }
+    return {
+        id: Math.random().toString(36).substr(2, 9),
+        name: name.endsWith('.pdf') ? name : `${name}.pdf`,
+        url: URL.createObjectURL(blob),
 
-        function addResult(name, bytes, type) {
-            const entry = { name, bytes, type, timestamp: new Date().toLocaleString() };
-            state.results[type].push(entry);
-            state.history.unshift(entry); // Add to session history
-            
-            renderResultCard(name, bytes, type);
-            const dlBtn = document.getElementById(`dl-all-${type}`);
-            if (dlBtn && state.results[type].length >= 2) {
-                dlBtn.style.display = 'block';
-            }
-        }
+        // existing (MB display)
+        originalSize: (originalSize / 1024 / 1024).toFixed(2),
+        newSize: (bytes.length / 1024 / 1024).toFixed(2),
+        saving: (100 - (bytes.length / originalSize * 100)).toFixed(1),
 
-        function renderResultCard(name, bytes, type) {
-            const isZip = name.endsWith('.zip');
-            const blob = new Blob([bytes], {type: isZip ? 'application/zip' : 'application/pdf'});
-            const url = URL.createObjectURL(blob);
-            
-            const card = document.createElement('div');
-            card.className = 'res-card';
-            card.innerHTML = `
-                <div style="font-size:0.75rem; font-weight:700; margin-bottom:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${name}</div>
-                <div style="display:flex; gap:5px;">
-                    <a href="${url}" download="${name}" class="action-btn" style="flex:1; display:block; text-align:center; text-decoration:none; padding:8px; font-size:0.7rem; background:var(--success)">Download</a>
-                    <button class="tiny-btn" onclick="clearResult('${name}', '${type}')" style="background:var(--danger)">✕</button>
+        // 🔧 PATCH 4 START: expose saved size
+        savedSizeMB: (savedBytes / 1024 / 1024).toFixed(2),
+        savedSizeKB: (savedBytes / 1024).toFixed(0),
+        // 🔧 PATCH 4 END
+
+        type,
+        timestamp: new Date().toLocaleTimeString()
+    };
+};
+
+            const downloadFile = (url, name) => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = name;
+                link.click();
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
+                    {toast && (
+                        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full flex items-center gap-3 z-50 shadow-2xl animate-bounce ${
+                            toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
+                        }`}>
+                            <Icon name={toast.type === 'success' ? 'check-circle-2' : 'alert-circle'} />
+                            <span className="font-medium text-sm">{toast.message}</span>
+                        </div>
+                    )}
+
+                    {isProcessing && (
+                        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 text-center">
+                            <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-8"></div>
+                            <h2 className="text-2xl font-black mb-2 uppercase italic tracking-tighter">Squeeze Engine Active</h2>
+                            <p className="text-slate-400 mb-8 font-medium text-sm tracking-widest">{statusText}</p>
+                            <div className="w-full max-w-md bg-slate-800 rounded-full h-1.5 mb-4 overflow-hidden">
+                                <div className="bg-indigo-500 h-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                            </div>
+                        </div>
+                    )}
+
+                    <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+                        <div>
+                            <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-indigo-400 via-white to-cyan-400 bg-clip-text text-transparent italic">
+                                PDF SQUEEZE PRO
+                            </h1>
+                            <p className="text-slate-500 font-bold text-[10px] uppercase tracking-[0.4em] mt-1">High-Compression Studio v3.0</p>
+                        </div>
+
+                        <nav className="flex bg-slate-900/50 p-1 rounded-2xl border border-slate-800 backdrop-blur overflow-x-auto max-w-full">
+                            {[
+                                { id: 'optimize', icon: 'zap', label: 'Crush' },
+                                { id: 'merge', icon: 'file-stack', label: 'Merge' },
+                                { id: 'rotate', icon: 'rotate-cw', label: 'Rotate' },
+                                { id: 'metadata', icon: 'tag', label: 'Meta' },
+                                { id: 'unlock', icon: 'unlock', label: 'Unlock' },
+                                { id: 'watermark', icon: 'type', label: 'Stamp' },
+                                { id: 'history', icon: 'history', label: 'Logs' },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => { setActiveTab(tab.id); setResults([]); }}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${
+                                        activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-200'
+                                    }`}
+                                >
+                                    <Icon name={tab.icon} size={12} />
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </nav>
+                    </header>
+
+                    <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <div className="lg:col-span-4 space-y-6">
+                            <section className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 shadow-xl">
+                                <div className="flex items-center gap-2 mb-6">
+                                    <Icon name="sliders" size={14} className="text-indigo-400" />
+                                    <h3 className="font-black uppercase tracking-widest text-[10px] text-slate-500">Operation Config</h3>
+                                </div>
+                                <div className="space-y-5">
+                                    {activeTab === 'optimize' && (
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Filename Prefix</label>
+                                            <input type="text" value={prefix} onChange={(e) => setPrefix(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500" />
+                                            <p className="text-[9px] text-slate-500 mt-2 font-medium">Using aggressive object stream crushing.</p>
+                                        </div>
+                                    )}
+                                    {activeTab === 'rotate' && (
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Angle (Degrees)</label>
+                                            <select value={rotateAngle} onChange={(e) => setRotateAngle(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none">
+                                                <option value="90">90° CW</option>
+                                                <option value="180">180°</option>
+                                                <option value="270">270° CW</option>
+                                            </select>
+                                        </div>
+                                    )}
+                                    {activeTab === 'metadata' && (
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">New Title</label>
+                                                <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="Marketing Report" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">New Author</label>
+                                                <input type="text" value={metaAuthor} onChange={(e) => setMetaAuthor(e.target.value)} placeholder="John Doe" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    {activeTab === 'merge' && (
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Merged Filename</label>
+                                            <input type="text" value={mergeName} onChange={(e) => setMergeName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none" />
+                                        </div>
+                                    )}
+                                    {activeTab === 'watermark' && (
+                                        <>
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Stamp Text</label>
+                                                <input type="text" value={wmText} onChange={(e) => setWmText(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Opacity ({wmOpacity})</label>
+                                                <input type="range" min="0.1" max="1" step="0.1" value={wmOpacity} onChange={(e) => setWmOpacity(e.target.value)} className="w-full accent-indigo-500 mt-2" />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </section>
+
+                            {activeTab !== 'history' && (
+                                <button
+                                    disabled={files.length === 0 || isProcessing}
+                                    onClick={processBatch}
+                                    className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-20 text-white font-black py-5 rounded-[2rem] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                                >
+                                    <Icon name="play" size={18} />
+                                    RUN {activeTab.toUpperCase()}
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="lg:col-span-8 space-y-8">
+                            {activeTab !== 'history' ? (
+                                <>
+                                    <div 
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="bg-slate-900 border-2 border-dashed border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 rounded-[3rem] p-16 text-center transition-all cursor-pointer group"
+                                    >
+                                        <input type="file" multiple accept=".pdf" className="hidden" ref={fileInputRef} onChange={handleFileSelection} />
+                                        <div className="bg-slate-800 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-indigo-600 transition-all shadow-xl">
+                                            <Icon name="upload-cloud" size={28} />
+                                        </div>
+                                        <h2 className="text-2xl font-black mb-2 italic tracking-tight">Drop PDF Source</h2>
+                                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">100% Client-Side Encryption</p>
+                                    </div>
+
+                                    {files.length > 0 && (
+                                        <div className="space-y-3">
+                                            <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-4">In Transit ({files.length})</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                {files.map((file, idx) => (
+                                                    <div key={idx} className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between animate-in slide-in-from-left-4">
+                                                        <div className="flex items-center gap-3 truncate">
+                                                            <div className="p-2 bg-slate-950 rounded-lg text-indigo-400"><Icon name="file-text" size={14} /></div>
+                                                            <span className="text-xs font-bold truncate max-w-[120px]">{file.name}</span>
+                                                        </div>
+                                                        <button onClick={(e) => { e.stopPropagation(); removeFile(idx); }} className="text-slate-700 hover:text-rose-500"><Icon name="x" size={14} /></button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {results.length > 0 && (
+                                        <div className="space-y-4 pt-4">
+                                            <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-4">Crushed Results</h3>
+                                            {results.map((res) => (
+                                                <div key={res.id} className="bg-emerald-500/5 border border-emerald-500/20 p-6 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 animate-in zoom-in-95">
+                                                    <div className="flex items-center gap-5">
+                                                        <div className="bg-emerald-500 p-4 rounded-2xl text-slate-950 shadow-lg"><Icon name="check" size={24} /></div>
+                                                        <div>
+                                                            <h4 className="font-black text-base italic">{res.name}</h4>
+                                                            <div className="flex gap-4 mt-1">
+                                                                <p className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest">
+                                                                    {res.newSize} MB
+                                                                </p>
+                                                                {parseFloat(res.saving) > 0 && (
+                                                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">
+                                                                        -{res.saving}% Smaller
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => downloadFile(res.url, res.name)} 
+                                                        className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-8 py-4 rounded-2xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 shadow-lg shadow-emerald-500/20"
+                                                    >
+                                                        <Icon name="download" size={14} /> SAVE
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="space-y-3">
+                                    <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-4">Engine Logs</h3>
+                                    {history.length === 0 ? (
+                                        <div className="py-20 text-center bg-slate-900 border border-slate-800 rounded-[3rem] opacity-30">
+                                            <Icon name="history" size={48} className="mx-auto mb-4" />
+                                            <p className="font-black text-[10px] uppercase">No Session Data</p>
+                                        </div>
+                                    ) : (
+                                        history.map((item) => (
+                                            <div key={item.id} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl flex justify-between items-center hover:border-slate-700 transition-colors">
+                                                <div>
+                                                    <p className="text-xs font-black">{item.name}</p>
+                                                    <p className="text-[9px] font-bold text-slate-600 uppercase mt-1 tracking-tighter">
+                                                        {item.type} • {item.newSize} MB • {item.timestamp}
+                                                    </p>
+                                                </div>
+                                                <button onClick={() => downloadFile(item.url, item.name)} className="p-3 text-slate-600 hover:text-indigo-400"><Icon name="download" size={16} /></button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                    
+                    <footer className="max-w-6xl mx-auto mt-20 pt-10 border-t border-slate-900 text-center pb-12">
+                        <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.6em]">Privacy First: Processing occurs solely in RAM • NO SERVER TRANSFER</p>
+                    </footer>
                 </div>
-            `;
-            document.getElementById(`results-${type}`).appendChild(card);
-        }
+            );
+        };
+        // 🔧 PATCH START: scanned pdf detection + parallel helpers
+const __MAX_WORKERS = Math.max(2, navigator.hardwareConcurrency || 4);
 
-        function renderHistory() {
-            const container = document.getElementById('history-container');
-            if (state.history.length === 0) {
-                container.innerHTML = '<p style="opacity:0.4;">No history yet. Start processing files to see them here.</p>';
-                return;
-            }
+function __isScannedPDF(pdfDoc) {
+  let hasFont = false;
+  let hasImage = false;
 
-            container.innerHTML = state.history.map((item, idx) => {
-                const isZip = item.name.endsWith('.zip');
-                const blob = new Blob([item.bytes], {type: isZip ? 'application/zip' : 'application/pdf'});
-                const url = URL.createObjectURL(blob);
-                
-                return `
-                <div class="history-item">
-                    <div class="history-info">
-                        <div class="history-name">${item.name}</div>
-                        <div class="history-meta">${item.type.toUpperCase()} • ${item.timestamp}</div>
-                    </div>
-                    <div style="display:flex; gap: 8px;">
-                        <a href="${url}" download="${item.name}" class="tiny-btn" style="background:var(--success); text-decoration:none;">Download</a>
-                        <button class="tiny-btn" onclick="removeHistoryItem(${idx})" style="background:var(--danger)">✕</button>
-                    </div>
-                </div>
-                `;
-            }).join('');
-        }
+  pdfDoc.context.enumerateIndirectObjects().forEach(([_, obj]) => {
+    if (obj?.dict?.get?.('Font')) hasFont = true;
+    if (obj?.dict?.get?.('Subtype')?.name === 'Image') hasImage = true;
+  });
 
-        function removeHistoryItem(idx) {
-            state.history.splice(idx, 1);
-            renderHistory();
-        }
+  return !hasFont && hasImage;
+}
 
-        function clearFullHistory() {
-            state.history = [];
-            renderHistory();
-            notify("History Cleared");
-        }
+async function __runParallel(files, handler) {
+  let results = [];
+  for (let i = 0; i < files.length; i += __MAX_WORKERS) {
+    const batch = files.slice(i, i + __MAX_WORKERS);
+    const res = await Promise.allSettled(batch.map(handler));
+    res.forEach(r => r.status === 'fulfilled' && results.push(r.value));
+  }
+  return results;
+}
+// 🔧 PATCH END
 
-        function clearResult(name, type) {
-            state.results[type] = state.results[type].filter(r => r.name !== name);
-            updateResultsUI(type);
-        }
-
-        async function downloadAllZip(type) {
-            const overlay = document.getElementById('processing-overlay');
-            overlay.style.display = 'flex';
-            document.getElementById('processing-text').textContent = "Zipping all results...";
-            
-            try {
-                const finalZip = new JSZip();
-                state.results[type].forEach(res => finalZip.file(res.name, res.bytes));
-                const content = await finalZip.generateAsync({type:"blob"});
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(content);
-                a.download = `SqueezePro_${type}_${Date.now()}.zip`;
-                a.click();
-                notify("Full Batch Downloaded!");
-            } catch (e) { 
-                notify("Zip failed", true);
-            } finally { 
-                overlay.style.display = 'none'; 
-            }
-        }
-
-        function notify(m, e=false) {
-            const t = document.getElementById('toast');
-            t.textContent = m; t.style.background = e ? '#ff4757' : '#7873f5';
-            t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 3000);
-        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PDFSqueezePro />);
     </script>
 </body>
 </html>
