@@ -1,6 +1,10 @@
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
+import multer from "multer";
+import { exec } from "child_process";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -14,13 +18,10 @@ app.get("/", (req, res) => {
   res.status(200).send("Lumix Core backend is alive 🚀");
 });
 
-/* ================= RENDER HEALTH CHECK ================= */
+/* ================= HEALTH ================= */
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
-
-/* ================= MEMORY ================= */
-const chatHistory = {};
 
 /* ================= AI STREAM ================= */
 app.post("/api/ai/stream", async (req, res) => {
@@ -45,16 +46,13 @@ app.post("/api/ai/stream", async (req, res) => {
     );
 
     if (!response.ok) {
-        res.write("data: ERROR\n\n");
-        return res.end();
+      res.write("data: ERROR\n\n");
+      return res.end();
     }
 
-    // In Node.js node-fetch, response.body is a Node Stream
-    // We use 'for await' to read the stream instead of getReader()
     let buffer = "";
     for await (const chunk of response.body) {
       buffer += chunk.toString();
-
       const parts = buffer.split("\n");
       buffer = parts.pop() || "";
 
@@ -63,18 +61,15 @@ app.post("/api/ai/stream", async (req, res) => {
         try {
           const json = JSON.parse(p);
           const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) {
-            res.write(`data: ${text}\n\n`);
-          }
-        } catch (e) {
-          // Keep buffer if JSON is incomplete
+          if (text) res.write(`data: ${text}\n\n`);
+        } catch {
+          // incomplete JSON, keep buffering
         }
       }
     }
 
     res.write("data: END\n\n");
     res.end();
-
   } catch (err) {
     console.error("Stream Error:", err);
     res.write("data: ERROR\n\n");
@@ -86,9 +81,7 @@ app.post("/api/ai/stream", async (req, res) => {
 app.get("/api/weather", async (req, res) => {
   try {
     const city = req.query.city;
-    if (!city) {
-      return res.status(400).json({ error: "City required" });
-    }
+    if (!city) return res.status(400).json({ error: "City required" });
 
     const r = await fetch(
       `https://api.weatherapi.com/v1/current.json?key=${process.env.WEATHER_API_KEY}&q=${encodeURIComponent(city)}`
@@ -102,25 +95,16 @@ app.get("/api/weather", async (req, res) => {
       humidity: d.current.humidity,
       wind: d.current.wind_kph
     });
-
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Weather fetch failed" });
   }
 });
-// ================================
-// PDF COMPRESSION (GHOSTSCRIPT)
-// ================================
-import multer from "multer";
-import { exec } from "child_process";
-import fs from "fs";
-import path from "path";
 
+/* ================= PDF COMPRESSION ================= */
 const upload = multer({ dest: "tmp/" });
 
 app.post("/api/compress", upload.single("file"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).send("No file uploaded");
-  }
+  if (!req.file) return res.status(400).send("No file uploaded");
 
   const inputPath = req.file.path;
   const outputPath = `${inputPath}-compressed.pdf`;
@@ -134,10 +118,11 @@ app.post("/api/compress", upload.single("file"), async (req, res) => {
        ${inputPath}
   `;
 
-  exec(gsCommand, (error) => {
+  // Timeout guard
+  const child = exec(gsCommand, { timeout: 30000 }, (error) => {
     if (error) {
       console.error("Ghostscript error:", error);
-      return res.status(500).send("Compression failed");
+      return res.status(500).send("Compression failed or timed out");
     }
 
     res.setHeader("Content-Type", "application/pdf");

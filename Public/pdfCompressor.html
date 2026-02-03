@@ -3,27 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Squeeze Pro - Portable Parallel Engine</title>
-    <!-- React & Babel Standalone -->
+    <title>PDF Squeeze Pro - Hybrid Engine</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons & PDF-LIB Engine -->
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #020617;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: white; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
     </style>
 </head>
 <body class="custom-scrollbar">
@@ -33,28 +25,36 @@
         const { useState, useEffect, useRef } = React;
         const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
 
+        // 🔹 SERVER CONFIGURATION
+        const SERVER_COMPRESS_ENDPOINT = "https://lumix-core-5tl0.onrender.com/api/compress";
+
+        // 🔹 2. TIMEOUT GUARD HELPER
+        const fetchWithTimeout = async (url, options = {}, timeout = 60000) => {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (e) {
+                clearTimeout(id);
+                throw new Error("Server Request Timed Out (Render Cold Start?)");
+            }
+        };
+
         const Icon = ({ name, size = 16, className = "" }) => {
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, [name]);
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
         };
-        // ================================
-// 🔥 SERVER PDF COMPRESSION ENDPOINT
-// ================================
-const SERVER_COMPRESS_ENDPOINT =
-  "https://lumix-core-5tl0.onrender.com/api/compress";
 
         const PDFSqueezePro = () => {
             const [activeTab, setActiveTab] = useState('optimize');
             const [files, setFiles] = useState([]);
             const [isProcessing, setIsProcessing] = useState(false);
-            const [progress, setProgress] = useState(0);
             const [statusText, setStatusText] = useState('');
             const [results, setResults] = useState([]);
             const [history, setHistory] = useState([]);
-            const [toast, setToast] = useState(null);
-
+            
             // Settings State
             const [prefix, setPrefix] = useState('squeezed_');
             const [mergeName, setMergeName] = useState('combined_result.pdf');
@@ -66,413 +66,143 @@ const SERVER_COMPRESS_ENDPOINT =
 
             const fileInputRef = useRef(null);
 
-            const showToast = (message, type = 'success') => {
-                setToast({ message, type });
-                setTimeout(() => setToast(null), 3000);
-            };
-
-            const handleFileSelection = (e) => {
-                const selectedFiles = Array.from(e.target.files).filter(f => f.type === 'application/pdf');
-                if (selectedFiles.length === 0) return;
-                setFiles(prev => [...prev, ...selectedFiles]);
-                showToast(`Added ${selectedFiles.length} files`);
-            };
-
-            const removeFile = (index) => setFiles(prev => prev.filter((_, i) => i !== index));
-
             const processBatch = async () => {
                 if (files.length === 0) return;
                 setIsProcessing(true);
-                setProgress(10);
-                setStatusText("Warming up Parallel Engine...");
+                let processedResults = [];
 
                 try {
-                    let processedResults = [];
-
                     if (activeTab === 'merge') {
-                        setStatusText("Merging documents...");
+                        setStatusText("Merging documents locally...");
                         const mergedPdf = await PDFDocument.create();
                         for (const file of files) {
                             const bytes = await file.arrayBuffer();
                             const pdf = await PDFDocument.load(bytes);
-                            const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-                            copiedPages.forEach((page) => mergedPdf.addPage(page));
+                            const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                            pages.forEach(p => mergedPdf.addPage(p));
                         }
-                        const pdfBytes = await mergedPdf.save();
-                        processedResults.push(generateResultObject(mergeName, pdfBytes, files.reduce((a,b)=>a+b.size,0), 'MERGE'));
+                        processedResults.push(generateRes(mergeName, await mergedPdf.save(), "MERGE", files.reduce((a,b)=>a+b.size,0)));
                     } 
-                    else if (activeTab === 'rotate') {
+                    else if (activeTab === 'optimize') {
+                        // 🔹 3. BACKEND TOGGLE (Strict Server Compression)
                         for (const file of files) {
-                            setStatusText(`Rotating ${file.name}...`);
-                            const bytes = await file.arrayBuffer();
-                            const pdfDoc = await PDFDocument.load(bytes);
-                            pdfDoc.getPages().forEach(p => p.setRotation(degrees(parseInt(rotateAngle))));
-                            const pdfBytes = await pdfDoc.save();
-                            processedResults.push(generateResultObject(`rotated_${file.name}`, pdfBytes, file.size, 'ROTATE'));
+                            setStatusText(`Deep Crushing on Server: ${file.name}...`);
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            const response = await fetchWithTimeout(SERVER_COMPRESS_ENDPOINT, { method: "POST", body: formData });
+                            if (!response.ok) throw new Error("Server compression failed");
+                            const buffer = await response.arrayBuffer();
+                            processedResults.push(generateRes(`${prefix}${file.name}`, new Uint8Array(buffer), "OPTIMIZE", file.size));
                         }
-                    }
-                    else if (activeTab === 'watermark') {
+                    } else {
+                        // LOCAL PROCESSING FOR OTHER TOOLS
                         for (const file of files) {
-                            setStatusText(`Stamping ${file.name}...`);
+                            setStatusText(`Processing ${file.name}...`);
                             const bytes = await file.arrayBuffer();
-                            const pdfDoc = await PDFDocument.load(bytes);
-                            const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-                            pdfDoc.getPages().forEach(page => {
-                                const { width, height } = page.getSize();
-                                page.drawText(wmText, {
-                                    x: width / 4, y: height / 2, size: 50, font,
-                                    rotate: degrees(45), opacity: parseFloat(wmOpacity),
-                                    color: rgb(0.5, 0.5, 0.5),
+                            const pdfDoc = await PDFDocument.load(bytes, { ignoreEncryption: activeTab === 'unlock' });
+
+                            if (activeTab === 'rotate') {
+                                pdfDoc.getPages().forEach(p => p.setRotation(degrees(parseInt(rotateAngle))));
+                            } else if (activeTab === 'watermark') {
+                                const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+                                pdfDoc.getPages().forEach(p => {
+                                    const { width, height } = p.getSize();
+                                    p.drawText(wmText, { x: width/4, y: height/2, size: 50, font, rotate: degrees(45), opacity: parseFloat(wmOpacity), color: rgb(0.5, 0.5, 0.5) });
                                 });
-                            });
-                            const pdfBytes = await pdfDoc.save();
-                            processedResults.push(generateResultObject(`stamped_${file.name}`, pdfBytes, file.size, 'WATERMARK'));
-                        }
-                    }
-                    else if (activeTab === 'metadata') {
-                        for (const file of files) {
-                            setStatusText(`Updating tags: ${file.name}...`);
-                            const bytes = await file.arrayBuffer();
-                            const pdfDoc = await PDFDocument.load(bytes);
-                            pdfDoc.setTitle(metaTitle || "Untitled Document");
-                            pdfDoc.setAuthor(metaAuthor || "PDF Squeeze User");
-                            pdfDoc.setProducer("PDF Squeeze Pro Engine v2.0");
-                            const pdfBytes = await pdfDoc.save();
-                            processedResults.push(generateResultObject(`tagged_${file.name}`, pdfBytes, file.size, 'METADATA'));
-                        }
-                    }
-                    else if (activeTab === 'unlock') {
-                        for (const file of files) {
-                            setStatusText(`Unlocking ${file.name}...`);
-                            const bytes = await file.arrayBuffer();
-                            // Note: pdf-lib loads encrypted PDFs if no password is set for opening
-                            const pdfDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-                            const pdfBytes = await pdfDoc.save();
-                            processedResults.push(generateResultObject(`unlocked_${file.name}`, pdfBytes, file.size, 'UNLOCK'));
-                        }
-                    }
-                   else {
-                            // 🔥 SERVER-BASED AGGRESSIVE OPTIMIZE (REAL COMPRESSION)
-                            for (const file of files) {
-                                setStatusText(`Crushing ${file.name} (Server Engine)...`);
-
-                                const formData = new FormData();
-                                formData.append("file", file);
-
-                                const response = await fetch(SERVER_COMPRESS_ENDPOINT, {
-                                method: "POST",
-                                body: formData
-                                });
-
-                                if (!response.ok) {
-                                throw new Error("Server compression failed");
-                                }
-
-                                const pdfBuffer = await response.arrayBuffer();
-
-                                processedResults.push(
-                                generateResultObject(
-                                    `${prefix}${file.name}`,
-                                    new Uint8Array(pdfBuffer),
-                                    file.size,
-                                    'OPTIMIZE'
-                                )
-                                );
+                            } else if (activeTab === 'metadata') {
+                                pdfDoc.setTitle(metaTitle || "Untitled");
+                                pdfDoc.setAuthor(metaAuthor || "User");
                             }
-                            }
-
-
-                    setProgress(100);
-                    setResults(processedResults);
+                            
+                            processedResults.push(generateRes(file.name, await pdfDoc.save(), activeTab.toUpperCase(), file.size));
+                        }
+                    }
+                    setResults([...processedResults, ...results]);
                     setHistory(prev => [...processedResults, ...prev]);
-                    showToast("Task completed!");
-                } catch (error) {
-                    console.error(error);
-                    showToast("Processing failed: Likely an encrypted file.", "error");
+                } catch (e) {
+                    alert("Engine Error: " + e.message);
                 } finally {
                     setIsProcessing(false);
                     setFiles([]);
                 }
             };
-const generateResultObject = (name, bytes, originalSize, type) => {
-    const blob = new Blob([bytes], { type: 'application/pdf' });
 
-    // 🔧 PATCH 4 START: size stats (raw values)
-    const savedBytes = originalSize - bytes.length;
-    // 🔧 PATCH 4 END
-
-    return {
-        id: Math.random().toString(36).substr(2, 9),
-        name: name.endsWith('.pdf') ? name : `${name}.pdf`,
-        url: URL.createObjectURL(blob),
-
-        // existing (MB display)
-        originalSize: (originalSize / 1024 / 1024).toFixed(2),
-        newSize: (bytes.length / 1024 / 1024).toFixed(2),
-        saving: (100 - (bytes.length / originalSize * 100)).toFixed(1),
-
-        // 🔧 PATCH 4 START: expose saved size
-        savedSizeMB: (savedBytes / 1024 / 1024).toFixed(2),
-        savedSizeKB: (savedBytes / 1024).toFixed(0),
-        // 🔧 PATCH 4 END
-
-        type,
-        timestamp: new Date().toLocaleTimeString()
-    };
-};
-
-            const downloadFile = (url, name) => {
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = name;
-                link.click();
+            const generateRes = (name, bytes, type, origSize) => {
+                const blob = new Blob([bytes], { type: 'application/pdf' });
+                return {
+                    id: Math.random().toString(36).substr(2,9),
+                    name: name.endsWith('.pdf') ? name : `${name}.pdf`,
+                    url: URL.createObjectURL(blob),
+                    newSize: (bytes.length / 1024 / 1024).toFixed(2),
+                    saving: (100 - (bytes.length / origSize * 100)).toFixed(1),
+                    type,
+                    timestamp: new Date().toLocaleTimeString()
+                };
             };
 
             return (
-                <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
-                    {toast && (
-                        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full flex items-center gap-3 z-50 shadow-2xl animate-bounce ${
-                            toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
-                        }`}>
-                            <Icon name={toast.type === 'success' ? 'check-circle-2' : 'alert-circle'} />
-                            <span className="font-medium text-sm">{toast.message}</span>
-                        </div>
-                    )}
-
-                    {isProcessing && (
-                        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 text-center">
-                            <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-8"></div>
-                            <h2 className="text-2xl font-black mb-2 uppercase italic tracking-tighter">Squeeze Engine Active</h2>
-                            <p className="text-slate-400 mb-8 font-medium text-sm tracking-widest">{statusText}</p>
-                            <div className="w-full max-w-md bg-slate-800 rounded-full h-1.5 mb-4 overflow-hidden">
-                                <div className="bg-indigo-500 h-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
-                            </div>
-                        </div>
-                    )}
-
-                    <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+                <div className="min-h-screen p-4 md:p-8 flex flex-col max-w-6xl mx-auto">
+                    <header className="mb-12 flex flex-col md:flex-row justify-between items-center gap-6">
                         <div>
-                            <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-indigo-400 via-white to-cyan-400 bg-clip-text text-transparent italic">
-                                PDF SQUEEZE PRO
-                            </h1>
-                            <p className="text-slate-500 font-bold text-[10px] uppercase tracking-[0.4em] mt-1">High-Compression Studio v3.0</p>
+                            <h1 className="text-4xl font-black italic tracking-tighter uppercase">PDF SQUEEZE PRO</h1>
+                            <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-widest mt-2">Hybrid Studio v3.0</p>
                         </div>
-
-                        <nav className="flex bg-slate-900/50 p-1 rounded-2xl border border-slate-800 backdrop-blur overflow-x-auto max-w-full">
-                            {[
-                                { id: 'optimize', icon: 'zap', label: 'Crush' },
-                                { id: 'merge', icon: 'file-stack', label: 'Merge' },
-                                { id: 'rotate', icon: 'rotate-cw', label: 'Rotate' },
-                                { id: 'metadata', icon: 'tag', label: 'Meta' },
-                                { id: 'unlock', icon: 'unlock', label: 'Unlock' },
-                                { id: 'watermark', icon: 'type', label: 'Stamp' },
-                                { id: 'history', icon: 'history', label: 'Logs' },
-                            ].map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => { setActiveTab(tab.id); setResults([]); }}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${
-                                        activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-200'
-                                    }`}
-                                >
-                                    <Icon name={tab.icon} size={12} />
-                                    {tab.label}
-                                </button>
+                        <nav className="flex bg-slate-900 border border-slate-800 p-1 rounded-2xl overflow-x-auto max-w-full">
+                            {['optimize', 'merge', 'rotate', 'metadata', 'unlock', 'watermark'].map(t => (
+                                <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${activeTab === t ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>{t}</button>
                             ))}
                         </nav>
                     </header>
 
-                    <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <main className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         <div className="lg:col-span-4 space-y-6">
-                            <section className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 shadow-xl">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <Icon name="sliders" size={14} className="text-indigo-400" />
-                                    <h3 className="font-black uppercase tracking-widest text-[10px] text-slate-500">Operation Config</h3>
-                                </div>
-                                <div className="space-y-5">
-                                    {activeTab === 'optimize' && (
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Filename Prefix</label>
-                                            <input type="text" value={prefix} onChange={(e) => setPrefix(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500" />
-                                            <p className="text-[9px] text-slate-500 mt-2 font-medium">Using aggressive object stream crushing.</p>
-                                        </div>
-                                    )}
-                                    {activeTab === 'rotate' && (
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Angle (Degrees)</label>
-                                            <select value={rotateAngle} onChange={(e) => setRotateAngle(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none">
-                                                <option value="90">90° CW</option>
-                                                <option value="180">180°</option>
-                                                <option value="270">270° CW</option>
-                                            </select>
-                                        </div>
-                                    )}
-                                    {activeTab === 'metadata' && (
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">New Title</label>
-                                                <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="Marketing Report" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">New Author</label>
-                                                <input type="text" value={metaAuthor} onChange={(e) => setMetaAuthor(e.target.value)} placeholder="John Doe" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none" />
-                                            </div>
-                                        </div>
-                                    )}
-                                    {activeTab === 'merge' && (
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Merged Filename</label>
-                                            <input type="text" value={mergeName} onChange={(e) => setMergeName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none" />
-                                        </div>
-                                    )}
-                                    {activeTab === 'watermark' && (
-                                        <>
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Stamp Text</label>
-                                                <input type="text" value={wmText} onChange={(e) => setWmText(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-600 mb-2 uppercase">Opacity ({wmOpacity})</label>
-                                                <input type="range" min="0.1" max="1" step="0.1" value={wmOpacity} onChange={(e) => setWmOpacity(e.target.value)} className="w-full accent-indigo-500 mt-2" />
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+                            <section className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] space-y-5">
+                                <h3 className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Configuration</h3>
+                                {activeTab === 'optimize' && <input type="text" value={prefix} onChange={e => setPrefix(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs font-bold" placeholder="Prefix..." />}
+                                {activeTab === 'watermark' && <input type="text" value={wmText} onChange={e => setWmText(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs font-bold" placeholder="Stamp text..." />}
+                                {activeTab === 'rotate' && <select value={rotateAngle} onChange={e => setRotateAngle(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs font-bold"><option value="90">90° CW</option><option value="180">180°</option><option value="270">270° CW</option></select>}
+                                <button onClick={processBatch} disabled={files.length === 0 || isProcessing} className="w-full bg-indigo-600 p-5 rounded-2xl font-black text-xs uppercase hover:bg-indigo-500 transition-all">Run Engine</button>
                             </section>
-
-                            {activeTab !== 'history' && (
-                                <button
-                                    disabled={files.length === 0 || isProcessing}
-                                    onClick={processBatch}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-20 text-white font-black py-5 rounded-[2rem] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
-                                >
-                                    <Icon name="play" size={18} />
-                                    RUN {activeTab.toUpperCase()}
-                                </button>
-                            )}
                         </div>
 
-                        <div className="lg:col-span-8 space-y-8">
-                            {activeTab !== 'history' ? (
-                                <>
-                                    <div 
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="bg-slate-900 border-2 border-dashed border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 rounded-[3rem] p-16 text-center transition-all cursor-pointer group"
-                                    >
-                                        <input type="file" multiple accept=".pdf" className="hidden" ref={fileInputRef} onChange={handleFileSelection} />
-                                        <div className="bg-slate-800 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-indigo-600 transition-all shadow-xl">
-                                            <Icon name="upload-cloud" size={28} />
+                        <div className="lg:col-span-8 space-y-6">
+                            <div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed border-slate-800 p-20 rounded-[3rem] text-center hover:bg-indigo-500/5 cursor-pointer">
+                                <input type="file" multiple hidden ref={fileInputRef} onChange={e => setFiles(Array.from(e.target.files))} />
+                                <Icon name="upload-cloud" size={32} className="mx-auto mb-4 text-slate-700" />
+                                <p className="text-slate-500 font-bold uppercase text-[10px]">Import Source PDFs</p>
+                                {files.length > 0 && <p className="mt-4 text-indigo-400 font-black">{files.length} Files Queued</p>}
+                            </div>
+
+                            <div className="space-y-3 h-[400px] overflow-y-auto custom-scrollbar">
+                                {results.map(res => (
+                                    <div key={res.id} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl flex justify-between items-center">
+                                        <div>
+                                            <p className="text-xs font-black uppercase truncate max-w-[200px]">{res.name}</p>
+                                            <p className="text-[9px] text-indigo-400 font-bold uppercase mt-1">{res.type} • {res.newSize} MB • -{res.saving}%</p>
                                         </div>
-                                        <h2 className="text-2xl font-black mb-2 italic tracking-tight">Drop PDF Source</h2>
-                                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">100% Client-Side Encryption</p>
+                                        <a href={res.url} download={res.name} className="bg-indigo-600 p-3 rounded-xl"><Icon name="download" size={14} /></a>
                                     </div>
-
-                                    {files.length > 0 && (
-                                        <div className="space-y-3">
-                                            <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-4">In Transit ({files.length})</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {files.map((file, idx) => (
-                                                    <div key={idx} className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between animate-in slide-in-from-left-4">
-                                                        <div className="flex items-center gap-3 truncate">
-                                                            <div className="p-2 bg-slate-950 rounded-lg text-indigo-400"><Icon name="file-text" size={14} /></div>
-                                                            <span className="text-xs font-bold truncate max-w-[120px]">{file.name}</span>
-                                                        </div>
-                                                        <button onClick={(e) => { e.stopPropagation(); removeFile(idx); }} className="text-slate-700 hover:text-rose-500"><Icon name="x" size={14} /></button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {results.length > 0 && (
-                                        <div className="space-y-4 pt-4">
-                                            <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-4">Crushed Results</h3>
-                                            {results.map((res) => (
-                                                <div key={res.id} className="bg-emerald-500/5 border border-emerald-500/20 p-6 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 animate-in zoom-in-95">
-                                                    <div className="flex items-center gap-5">
-                                                        <div className="bg-emerald-500 p-4 rounded-2xl text-slate-950 shadow-lg"><Icon name="check" size={24} /></div>
-                                                        <div>
-                                                            <h4 className="font-black text-base italic">{res.name}</h4>
-                                                            <div className="flex gap-4 mt-1">
-                                                                <p className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest">
-                                                                    {res.newSize} MB
-                                                                </p>
-                                                                {parseFloat(res.saving) > 0 && (
-                                                                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">
-                                                                        -{res.saving}% Smaller
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => downloadFile(res.url, res.name)} 
-                                                        className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-8 py-4 rounded-2xl flex items-center justify-center gap-2 text-xs transition-all active:scale-95 shadow-lg shadow-emerald-500/20"
-                                                    >
-                                                        <Icon name="download" size={14} /> SAVE
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <div className="space-y-3">
-                                    <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-4">Engine Logs</h3>
-                                    {history.length === 0 ? (
-                                        <div className="py-20 text-center bg-slate-900 border border-slate-800 rounded-[3rem] opacity-30">
-                                            <Icon name="history" size={48} className="mx-auto mb-4" />
-                                            <p className="font-black text-[10px] uppercase">No Session Data</p>
-                                        </div>
-                                    ) : (
-                                        history.map((item) => (
-                                            <div key={item.id} className="bg-slate-900 border border-slate-800 p-5 rounded-3xl flex justify-between items-center hover:border-slate-700 transition-colors">
-                                                <div>
-                                                    <p className="text-xs font-black">{item.name}</p>
-                                                    <p className="text-[9px] font-bold text-slate-600 uppercase mt-1 tracking-tighter">
-                                                        {item.type} • {item.newSize} MB • {item.timestamp}
-                                                    </p>
-                                                </div>
-                                                <button onClick={() => downloadFile(item.url, item.name)} className="p-3 text-slate-600 hover:text-indigo-400"><Icon name="download" size={16} /></button>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
+                                ))}
+                            </div>
                         </div>
                     </main>
-                    
-                    <footer className="max-w-6xl mx-auto mt-20 pt-10 border-t border-slate-900 text-center pb-12">
-                        <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.6em]">Privacy First: Processing occurs solely in RAM • NO SERVER TRANSFER</p>
+
+                    {/* 🔹 1. HONEST FOOTER */}
+                    <footer className="mt-20 pt-10 border-t border-slate-900 text-center pb-12">
+                        <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.6em]">
+                            Hybrid mode: local tools + secure server compression
+                        </p>
                     </footer>
+
+                    {isProcessing && (
+                        <div className="fixed inset-0 bg-slate-950/90 flex flex-col items-center justify-center z-[100]">
+                            <div className="w-12 h-12 border-4 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+                            <p className="text-[10px] font-black uppercase tracking-widest">{statusText}</p>
+                        </div>
+                    )}
                 </div>
             );
         };
-        // 🔧 PATCH START: scanned pdf detection + parallel helpers
-const __MAX_WORKERS = Math.max(2, navigator.hardwareConcurrency || 4);
-
-function __isScannedPDF(pdfDoc) {
-  let hasFont = false;
-  let hasImage = false;
-
-  pdfDoc.context.enumerateIndirectObjects().forEach(([_, obj]) => {
-    if (obj?.dict?.get?.('Font')) hasFont = true;
-    if (obj?.dict?.get?.('Subtype')?.name === 'Image') hasImage = true;
-  });
-
-  return !hasFont && hasImage;
-}
-
-async function __runParallel(files, handler) {
-  let results = [];
-  for (let i = 0; i < files.length; i += __MAX_WORKERS) {
-    const batch = files.slice(i, i + __MAX_WORKERS);
-    const res = await Promise.allSettled(batch.map(handler));
-    res.forEach(r => r.status === 'fulfilled' && results.push(r.value));
-  }
-  return results;
-}
-// 🔧 PATCH END
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<PDFSqueezePro />);
